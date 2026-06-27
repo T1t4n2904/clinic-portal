@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/session";
 
 export type DoctorLoginActionState = {
+  errors?: Record<string, string>;
   message?: string;
 };
 
@@ -17,7 +18,12 @@ export async function loginDoctor(
   const password = String(formData.get("password") || "");
 
   if (!identifier || !password) {
-    return { message: "Enter your doctor email or phone number and password." };
+    return {
+      errors: {
+        ...(!identifier ? { identifier: "Enter your doctor email or phone number." } : {}),
+        ...(!password ? { password: "Enter your password." } : {}),
+      },
+    };
   }
 
   const user = await prisma.user.findFirst({
@@ -27,21 +33,21 @@ export async function loginDoctor(
   });
 
   if (!user) {
-    return { message: "Invalid doctor login details." };
+    return { errors: { identifier: "No doctor account found for these details." } };
   }
 
   if (user.role !== "DOCTOR") {
-    return { message: "This account does not have doctor access." };
+    return { errors: { identifier: "This account does not have doctor access." } };
   }
 
   const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
   if (!isPasswordValid) {
-    return { message: "Invalid doctor login details." };
+    return { errors: { password: "Incorrect password." } };
   }
 
   if (!user.phoneVerified) {
-    return { message: "Doctor account is not verified." };
+    return { errors: { identifier: "Doctor account is not verified." } };
   }
 
   await createSession(user.id);

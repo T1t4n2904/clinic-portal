@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { createSession } from "@/lib/session";
 import { generateOtp, getOtpExpiry, hashOtp, isOtpExpired, verifyOtp } from "@/lib/otp";
 
 export type VerifyOtpActionState = {
@@ -59,7 +60,8 @@ export async function verifyPhoneOtp(
     }),
   ]);
 
-  redirect("/?verified=1");
+  await createSession(latestOtp.userId);
+  redirect("/dashboard");
 }
 
 export async function resendPhoneOtp(

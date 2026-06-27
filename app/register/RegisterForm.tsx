@@ -1,13 +1,56 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { Field } from "@/components/Field";
 import { SelectField } from "@/components/SelectField";
 import { SubmitButton } from "@/components/SubmitButton";
 import { registerPatient } from "./actions";
 
+type RegisterValues = {
+  fullName: string;
+  age: string;
+  gender: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+};
+
+const initialValues: RegisterValues = {
+  fullName: "",
+  age: "",
+  gender: "",
+  email: "",
+  phone: "",
+  password: "",
+  confirmPassword: "",
+};
+
 export function RegisterForm() {
   const [state, formAction] = useActionState(registerPatient, {});
+  const [values, setValues] = useState(initialValues);
+  const [visibleErrors, setVisibleErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    setVisibleErrors(state.errors || {});
+  }, [state.errors]);
+
+  function updateValue(name: keyof RegisterValues, value: string) {
+    setValues((current) => ({
+      ...current,
+      [name]: value,
+    }));
+
+    setVisibleErrors((current) => {
+      if (!current[name]) {
+        return current;
+      }
+
+      const next = { ...current };
+      delete next[name];
+      return next;
+    });
+  }
 
   return (
     <form action={formAction} className="space-y-5">
@@ -15,7 +58,9 @@ export function RegisterForm() {
         label="Full name"
         name="fullName"
         placeholder="Enter full name"
-        error={state.errors?.fullName}
+        value={values.fullName}
+        onChange={(event) => updateValue("fullName", event.target.value)}
+        error={visibleErrors.fullName}
       />
 
       <Field
@@ -23,14 +68,18 @@ export function RegisterForm() {
         name="age"
         type="number"
         placeholder="Enter age"
-        error={state.errors?.age}
+        value={values.age}
+        onChange={(event) => updateValue("age", event.target.value)}
+        error={visibleErrors.age}
       />
 
       <SelectField
         label="Gender"
         name="gender"
         options={["Female", "Male", "Other"]}
-        error={state.errors?.gender}
+        value={values.gender}
+        onChange={(event) => updateValue("gender", event.target.value)}
+        error={visibleErrors.gender}
       />
 
       <Field
@@ -38,14 +87,18 @@ export function RegisterForm() {
         name="email"
         type="email"
         placeholder="you@example.com"
-        error={state.errors?.email}
+        value={values.email}
+        onChange={(event) => updateValue("email", event.target.value)}
+        error={visibleErrors.email}
       />
 
       <Field
         label="Phone number"
         name="phone"
         placeholder="10-digit mobile number"
-        error={state.errors?.phone}
+        value={values.phone}
+        onChange={(event) => updateValue("phone", event.target.value)}
+        error={visibleErrors.phone}
       />
 
       <Field
@@ -53,7 +106,9 @@ export function RegisterForm() {
         name="password"
         type="password"
         placeholder="Minimum 8 characters"
-        error={state.errors?.password}
+        value={values.password}
+        onChange={(event) => updateValue("password", event.target.value)}
+        error={visibleErrors.password}
       />
 
       <Field
@@ -61,7 +116,9 @@ export function RegisterForm() {
         name="confirmPassword"
         type="password"
         placeholder="Re-enter password"
-        error={state.errors?.confirmPassword}
+        value={values.confirmPassword}
+        onChange={(event) => updateValue("confirmPassword", event.target.value)}
+        error={visibleErrors.confirmPassword}
       />
 
       <SubmitButton>Create account</SubmitButton>

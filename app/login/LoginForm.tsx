@@ -1,12 +1,19 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { Field } from "@/components/Field";
 import { SubmitButton } from "@/components/SubmitButton";
 import { loginPatient } from "./actions";
 
 export function LoginForm() {
   const [state, formAction] = useActionState(loginPatient, {});
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+  const [visibleErrors, setVisibleErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    setVisibleErrors(state.errors || {});
+  }, [state.errors]);
 
   return (
     <form action={formAction} className="space-y-5">
@@ -14,6 +21,12 @@ export function LoginForm() {
         label="Email or phone number"
         name="identifier"
         placeholder="you@example.com or 10-digit phone"
+        value={identifier}
+        onChange={(event) => {
+          setIdentifier(event.target.value);
+          setVisibleErrors((current) => ({ ...current, identifier: "" }));
+        }}
+        error={visibleErrors.identifier}
       />
 
       <Field
@@ -21,6 +34,12 @@ export function LoginForm() {
         name="password"
         type="password"
         placeholder="Enter password"
+        value={password}
+        onChange={(event) => {
+          setPassword(event.target.value);
+          setVisibleErrors((current) => ({ ...current, password: "" }));
+        }}
+        error={visibleErrors.password}
       />
 
       {state.message ? (
