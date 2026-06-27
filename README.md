@@ -1,6 +1,6 @@
 # Clinic Portal Auth MVP
 
-A focused patient authentication MVP built with Next.js App Router, TypeScript, Tailwind CSS, Prisma, SQLite, and bcrypt.
+A focused patient authentication MVP built with Next.js App Router, TypeScript, Tailwind CSS, Prisma, Supabase PostgreSQL, and bcrypt.
 
 ## Tech Stack
 
@@ -9,7 +9,7 @@ A focused patient authentication MVP built with Next.js App Router, TypeScript, 
 - TypeScript
 - Tailwind CSS
 - Prisma 6
-- SQLite
+- Supabase PostgreSQL
 - bcrypt
 
 ## Features
@@ -21,6 +21,8 @@ A focused patient authentication MVP built with Next.js App Router, TypeScript, 
 - Login with email or phone number.
 - Signed HTTP-only session cookie.
 - Protected patient dashboard.
+- Hidden doctor login route with doctor-only access.
+- Basic doctor patient directory.
 - Logout flow.
 
 ## Local Setup
@@ -49,6 +51,12 @@ Run database migrations:
 npx prisma migrate dev
 ```
 
+Create or update the demo doctor account:
+
+```bash
+npm run seed:doctor
+```
+
 Start the development server:
 
 ```bash
@@ -66,14 +74,16 @@ DATABASE_URL="file:./dev.db"
 SESSION_SECRET="replace-with-a-long-random-secret"
 ```
 
-- `DATABASE_URL`: SQLite database connection used by Prisma.
+- `DATABASE_URL`: PostgreSQL database connection used by Prisma.
 - `SESSION_SECRET`: Secret key used to sign session cookies.
+- `DOCTOR_EMAIL`, `DOCTOR_PHONE`, `DOCTOR_PASSWORD`, `DOCTOR_NAME`: optional values used by `npm run seed:doctor`.
 
 ## Project Structure
 
 ```text
 app/
   dashboard/      Protected patient dashboard and logout action
+  doctor/         Hidden doctor login, dashboard, and patient directory
   login/          Login page, form, and server action
   register/       Registration page, form, and server action
   verify-otp/     OTP verification page, form, resend, and server actions
@@ -106,5 +116,5 @@ npx prisma studio
 
 - Do not commit `.env`, `.next/`, `node_modules/`, or local SQLite database files.
 - Set `SESSION_SECRET` to a strong production value.
-- SQLite is suitable for local MVP development. For production, migrate to a hosted database such as PostgreSQL.
+- Supabase PostgreSQL is used for shared development and deployment.
 - OTP is currently development-only and displayed/logged locally. Use an SMS provider before production use.

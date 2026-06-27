@@ -5,19 +5,19 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/session";
 
-export type LoginActionState = {
+export type DoctorLoginActionState = {
   message?: string;
 };
 
-export async function loginPatient(
-  _prevState: LoginActionState,
+export async function loginDoctor(
+  _prevState: DoctorLoginActionState,
   formData: FormData
-): Promise<LoginActionState> {
+): Promise<DoctorLoginActionState> {
   const identifier = String(formData.get("identifier") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "");
 
   if (!identifier || !password) {
-    return { message: "Enter your email or phone number and password." };
+    return { message: "Enter your doctor email or phone number and password." };
   }
 
   const user = await prisma.user.findFirst({
@@ -27,23 +27,23 @@ export async function loginPatient(
   });
 
   if (!user) {
-    return { message: "Invalid login details." };
+    return { message: "Invalid doctor login details." };
   }
 
-  if (user.role !== "PATIENT") {
-    return { message: "Invalid login details." };
+  if (user.role !== "DOCTOR") {
+    return { message: "This account does not have doctor access." };
   }
 
   const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
   if (!isPasswordValid) {
-    return { message: "Invalid login details." };
+    return { message: "Invalid doctor login details." };
   }
 
   if (!user.phoneVerified) {
-    return { message: "Please verify your phone number before logging in." };
+    return { message: "Doctor account is not verified." };
   }
 
   await createSession(user.id);
-  redirect("/dashboard");
+  redirect("/doctor/dashboard");
 }

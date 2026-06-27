@@ -57,6 +57,7 @@ export async function registerPatient(
       email: result.data.email,
       phone: result.data.phone,
       passwordHash,
+      role: "PATIENT",
     },
   });
 
