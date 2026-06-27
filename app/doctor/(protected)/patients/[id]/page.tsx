@@ -16,6 +16,27 @@ export default async function PatientDetailPage({
     where: {
       id,
       role: "PATIENT",
+      appointments: {
+        some: {},
+      },
+    },
+    select: {
+      fullName: true,
+      email: true,
+      phone: true,
+      age: true,
+      gender: true,
+      phoneVerified: true,
+      createdAt: true,
+      appointments: {
+        select: {
+          id: true,
+          slotLabel: true,
+          status: true,
+          paymentStatus: true,
+        },
+        orderBy: { slotStart: "desc" },
+      },
     },
   });
 
@@ -38,7 +59,7 @@ export default async function PatientDetailPage({
           {patient.fullName}
         </h1>
         <p className="mt-2 text-sm text-slate-600">
-          Basic registered profile only. Medical records are not implemented yet.
+          Appointment-linked profile only. Medical records are not implemented yet.
         </p>
       </div>
 
@@ -54,6 +75,10 @@ export default async function PatientDetailPage({
         <Detail
           label="Registered"
           value={patient.createdAt.toLocaleString()}
+        />
+        <Detail
+          label="Appointments"
+          value={patient.appointments.length.toString()}
         />
       </div>
     </section>

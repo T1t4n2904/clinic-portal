@@ -6,6 +6,14 @@ export default async function PatientAppointmentsPage() {
   const patient = await requirePatient();
   const appointments = await prisma.appointment.findMany({
     where: { patientId: patient.id },
+    select: {
+      id: true,
+      mode: true,
+      slotLabel: true,
+      amount: true,
+      paymentStatus: true,
+      status: true,
+    },
     orderBy: { slotStart: "asc" },
   });
 
@@ -20,7 +28,7 @@ export default async function PatientAppointmentsPage() {
         </div>
         <Link
           href="/dashboard/appointments/new"
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 active:scale-[0.98]"
         >
           Book appointment
         </Link>
@@ -42,7 +50,7 @@ export default async function PatientAppointmentsPage() {
                 <div>
                   <p className="font-medium">{appointment.slotLabel}</p>
                   <p className="text-sm text-slate-600">
-                    {appointment.mode.toLowerCase()} · ₹{appointment.amount}
+                    {appointment.mode.toLowerCase()} · Rs. {appointment.amount}
                   </p>
                 </div>
                 <div className="text-sm text-slate-600">

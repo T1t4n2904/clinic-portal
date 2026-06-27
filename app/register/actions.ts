@@ -67,6 +67,7 @@ export async function registerPatient(
     data: {
       phone: user.phone,
       otpHash: await hashOtp(otp),
+      purpose: "PHONE_VERIFICATION",
       expiresAt: getOtpExpiry(5),
       userId: user.id,
     },

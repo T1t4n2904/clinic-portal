@@ -3,7 +3,7 @@
 import * as bcrypt from "bcrypt";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { createSession } from "@/lib/session";
+import { generateOtp, getOtpExpiry, hashOtp } from "@/lib/otp";
 
 export type DoctorLoginActionState = {
   errors?: Record<string, string>;
@@ -30,6 +30,13 @@ export async function loginDoctor(
     where: {
       OR: [{ email: identifier }, { phone: identifier }],
     },
+    select: {
+      id: true,
+      phone: true,
+      passwordHash: true,
+      role: true,
+      phoneVerified: true,
+    },
   });
 
   if (!user) {
@@ -50,6 +57,27 @@ export async function loginDoctor(
     return { errors: { identifier: "Doctor account is not verified." } };
   }
 
-  await createSession(user.id);
-  redirect("/doctor/dashboard");
+  await prisma.otpCode.updateMany({
+    where: {
+      userId: user.id,
+      purpose: "LOGIN_VERIFY",
+      consumed: false,
+    },
+    data: { consumed: true },
+  });
+
+  const otp = generateOtp();
+  const loginOtp = await prisma.otpCode.create({
+    data: {
+      phone: user.phone,
+      otpHash: await hashOtp(otp),
+      purpose: "LOGIN_VERIFY",
+      expiresAt: getOtpExpiry(5),
+      userId: user.id,
+    },
+  });
+
+  console.log("DEV DOCTOR LOGIN OTP:", otp);
+
+  redirect(`/verify-login-otp?challenge=${loginOtp.id}&devOtp=${otp}`);
 }

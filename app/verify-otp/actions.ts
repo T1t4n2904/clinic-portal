@@ -28,6 +28,7 @@ export async function verifyPhoneOtp(
   const latestOtp = await prisma.otpCode.findFirst({
     where: {
       phone,
+      purpose: "PHONE_VERIFICATION",
       consumed: false,
     },
     orderBy: {
@@ -76,6 +77,10 @@ export async function resendPhoneOtp(
 
   const user = await prisma.user.findUnique({
     where: { phone },
+    select: {
+      id: true,
+      phoneVerified: true,
+    },
   });
 
   if (!user) {
@@ -89,6 +94,7 @@ export async function resendPhoneOtp(
   await prisma.otpCode.updateMany({
     where: {
       phone,
+      purpose: "PHONE_VERIFICATION",
       consumed: false,
     },
     data: {
@@ -102,6 +108,7 @@ export async function resendPhoneOtp(
     data: {
       phone,
       otpHash: await hashOtp(otp),
+      purpose: "PHONE_VERIFICATION",
       expiresAt: getOtpExpiry(5),
       userId: user.id,
     },

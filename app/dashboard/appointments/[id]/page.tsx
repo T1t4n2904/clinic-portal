@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { SubmitButton } from "@/components/SubmitButton";
 import { prisma } from "@/lib/prisma";
 import { requirePatient } from "@/lib/auth";
 import { demoPayAppointment } from "../actions";
@@ -20,6 +21,15 @@ export default async function PatientAppointmentDetailPage({
     where: {
       id,
       patientId: patient.id,
+    },
+    select: {
+      id: true,
+      mode: true,
+      slotStart: true,
+      slotLabel: true,
+      amount: true,
+      paymentStatus: true,
+      status: true,
     },
   });
 
@@ -54,7 +64,7 @@ export default async function PatientAppointmentDetailPage({
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         <Detail label="Mode" value={appointment.mode} />
         <Detail label="Slot" value={appointment.slotStart.toLocaleString()} />
-        <Detail label="Amount" value={`₹${appointment.amount}`} />
+        <Detail label="Amount" value={`Rs. ${appointment.amount}`} />
         <Detail label="Payment" value={appointment.paymentStatus} />
         <Detail label="Status" value={appointment.status.replace("_", " ")} />
       </div>
@@ -62,12 +72,9 @@ export default async function PatientAppointmentDetailPage({
       {canPay ? (
         <form action={demoPayAppointment} className="mt-8">
           <input type="hidden" name="appointmentId" value={appointment.id} />
-          <button
-            type="submit"
-            className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            Demo Pay ₹{appointment.amount}
-          </button>
+          <SubmitButton pendingText="Processing demo payment..." fullWidth={false}>
+            Demo Pay Rs. {appointment.amount}
+          </SubmitButton>
         </form>
       ) : (
         <p className="mt-8 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">

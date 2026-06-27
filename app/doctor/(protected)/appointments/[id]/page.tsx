@@ -12,7 +12,20 @@ export default async function DoctorAppointmentDetailPage({
   const { id } = await params;
   const appointment = await prisma.appointment.findUnique({
     where: { id },
-    include: { patient: true },
+    select: {
+      mode: true,
+      slotLabel: true,
+      slotStart: true,
+      status: true,
+      paymentStatus: true,
+      patient: {
+        select: {
+          fullName: true,
+          phone: true,
+          email: true,
+        },
+      },
+    },
   });
 
   if (!appointment) {

@@ -2,31 +2,19 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 
 export default async function DoctorDashboardPage() {
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-
+  const now = new Date();
   const [
-    totalPatients,
-    verifiedPatients,
-    newPatientsToday,
+    totalAppointments,
     confirmedUpcomingAppointments,
     paymentPendingAppointments,
+    appointmentPatients,
   ] = await Promise.all([
-    prisma.user.count({ where: { role: "PATIENT" } }),
-    prisma.user.count({ where: { role: "PATIENT", phoneVerified: true } }),
-    prisma.user.count({
-      where: {
-        role: "PATIENT",
-        createdAt: {
-          gte: startOfToday,
-        },
-      },
-    }),
+    prisma.appointment.count(),
     prisma.appointment.count({
       where: {
         status: "CONFIRMED",
         slotStart: {
-          gte: new Date(),
+          gte: now,
         },
       },
     }),
@@ -35,6 +23,10 @@ export default async function DoctorDashboardPage() {
         paymentStatus: "PENDING",
       },
     }),
+    prisma.appointment.findMany({
+      distinct: ["patientId"],
+      select: { patientId: true },
+    }),
   ]);
 
   return (
@@ -42,17 +34,16 @@ export default async function DoctorDashboardPage() {
       <section className="rounded-2xl bg-white p-8 text-slate-900 shadow-sm">
         <p className="text-sm font-medium text-blue-600">Doctor Dashboard</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight">
-          Clinic patient overview
+          Appointment command center
         </h1>
         <p className="mt-3 text-sm text-slate-600">
-          A lightweight staff view for registered patient accounts.
+          Focused on booked appointments and appointment-linked patients. General
+          registration analytics are intentionally hidden.
         </p>
       </section>
 
-      <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-5">
-        <MetricCard label="Total patients" value={totalPatients.toString()} />
-        <MetricCard label="Verified patients" value={verifiedPatients.toString()} />
-        <MetricCard label="New today" value={newPatientsToday.toString()} />
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <MetricCard label="Total appointments" value={totalAppointments.toString()} />
         <MetricCard
           label="Confirmed upcoming"
           value={confirmedUpcomingAppointments.toString()}
@@ -61,26 +52,32 @@ export default async function DoctorDashboardPage() {
           label="Payment pending"
           value={paymentPendingAppointments.toString()}
         />
+        <MetricCard
+          label="Appointment-linked patients"
+          value={appointmentPatients.length.toString()}
+        />
       </div>
 
       <section className="rounded-2xl bg-white p-6 text-slate-900 shadow-sm">
-        <h2 className="text-xl font-semibold">Patient directory</h2>
+        <h2 className="text-xl font-semibold">Clinic appointments</h2>
         <p className="mt-2 text-sm text-slate-600">
-          Review registered patient profiles. Medical records are intentionally
-          not implemented yet.
+          Review booked appointments first. Patient directory only includes
+          patients with at least one appointment.
         </p>
-        <Link
-          href="/doctor/patients"
-          className="mt-5 inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          View patients
-        </Link>
-        <Link
-          href="/doctor/appointments"
-          className="ml-3 mt-5 inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-        >
-          View appointments
-        </Link>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Link
+            href="/doctor/appointments"
+            className="inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 active:scale-[0.98]"
+          >
+            View appointments
+          </Link>
+          <Link
+            href="/doctor/patients"
+            className="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 active:scale-[0.98]"
+          >
+            View patient directory
+          </Link>
+        </div>
       </section>
     </div>
   );

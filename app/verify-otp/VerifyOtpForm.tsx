@@ -51,12 +51,13 @@ export function VerifyOtpForm({ phone = "", devOtp }: VerifyOtpFormProps) {
           </p>
         ) : null}
 
-        <button
-          type="submit"
-          className="text-sm font-medium text-blue-300 hover:text-blue-200"
+        <SubmitButton
+          variant="ghost"
+          fullWidth={false}
+          pendingText="Generating OTP..."
         >
           Resend OTP
-        </button>
+        </SubmitButton>
       </form>
     </div>
   );

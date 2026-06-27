@@ -79,7 +79,7 @@ export function AppointmentForm() {
       </div>
 
       <div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
-        Demo consultation fee: <span className="font-semibold text-slate-900">₹500</span>
+        Demo consultation fee: <span className="font-semibold text-slate-900">Rs. 500</span>
       </div>
 
       <SubmitButton>Book demo appointment</SubmitButton>

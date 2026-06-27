@@ -3,8 +3,18 @@ import { prisma } from "@/lib/prisma";
 
 export default async function DoctorAppointmentsPage() {
   const appointments = await prisma.appointment.findMany({
-    include: {
-      patient: true,
+    select: {
+      id: true,
+      mode: true,
+      slotLabel: true,
+      status: true,
+      paymentStatus: true,
+      patient: {
+        select: {
+          fullName: true,
+          phone: true,
+        },
+      },
     },
     orderBy: { slotStart: "asc" },
   });

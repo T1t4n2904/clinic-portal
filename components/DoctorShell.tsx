@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { SubmitButton } from "@/components/SubmitButton";
 import { logoutDoctor } from "@/app/doctor/actions";
 
 type DoctorShellProps = {
@@ -36,12 +37,9 @@ export function DoctorShell({ fullName, children }: DoctorShellProps) {
           </nav>
 
           <form action={logoutDoctor} className="mt-8">
-            <button
-              type="submit"
-              className="w-full rounded-lg border border-white/20 px-3 py-2 text-sm font-medium text-slate-100 hover:bg-white/10"
-            >
+            <SubmitButton variant="secondary" pendingText="Logging out...">
               Logout
-            </button>
+            </SubmitButton>
           </form>
       </aside>
 
