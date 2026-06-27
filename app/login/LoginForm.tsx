@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { Field } from "@/components/Field";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -49,6 +50,13 @@ export function LoginForm() {
       ) : null}
 
       <SubmitButton>Login</SubmitButton>
+
+      <Link
+        href="/forgot-password"
+        className="inline-flex text-sm font-medium text-blue-600 hover:text-blue-700"
+      >
+        Forgot password?
+      </Link>
     </form>
   );
 }

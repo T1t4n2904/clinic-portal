@@ -4,6 +4,10 @@ import { cookies } from "next/headers";
 const SESSION_COOKIE = "clinic_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 
+export function getAppVersion() {
+  return process.env.APP_VERSION || "dev";
+}
+
 function getSessionSecret() {
   return process.env.SESSION_SECRET || "clinic-portal-dev-session-secret";
 }
@@ -24,7 +28,7 @@ function verifySignature(value: string, signature: string) {
 }
 
 export async function createSession(userId: string) {
-  const value = userId;
+  const value = `${userId}:${getAppVersion()}`;
   const signature = sign(value);
   const cookieStore = await cookies();
 
@@ -51,10 +55,16 @@ export async function getSessionUserId() {
     return null;
   }
 
-  const userId = session.slice(0, separatorIndex);
+  const value = session.slice(0, separatorIndex);
   const signature = session.slice(separatorIndex + 1);
 
-  if (!userId || !signature || !verifySignature(userId, signature)) {
+  if (!value || !signature || !verifySignature(value, signature)) {
+    return null;
+  }
+
+  const [userId, version] = value.split(":");
+
+  if (!userId || version !== getAppVersion()) {
     return null;
   }
 

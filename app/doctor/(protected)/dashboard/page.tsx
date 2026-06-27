@@ -5,7 +5,13 @@ export default async function DoctorDashboardPage() {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
-  const [totalPatients, verifiedPatients, newPatientsToday] = await Promise.all([
+  const [
+    totalPatients,
+    verifiedPatients,
+    newPatientsToday,
+    confirmedUpcomingAppointments,
+    paymentPendingAppointments,
+  ] = await Promise.all([
     prisma.user.count({ where: { role: "PATIENT" } }),
     prisma.user.count({ where: { role: "PATIENT", phoneVerified: true } }),
     prisma.user.count({
@@ -14,6 +20,19 @@ export default async function DoctorDashboardPage() {
         createdAt: {
           gte: startOfToday,
         },
+      },
+    }),
+    prisma.appointment.count({
+      where: {
+        status: "CONFIRMED",
+        slotStart: {
+          gte: new Date(),
+        },
+      },
+    }),
+    prisma.appointment.count({
+      where: {
+        paymentStatus: "PENDING",
       },
     }),
   ]);
@@ -30,10 +49,18 @@ export default async function DoctorDashboardPage() {
         </p>
       </section>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-5">
         <MetricCard label="Total patients" value={totalPatients.toString()} />
         <MetricCard label="Verified patients" value={verifiedPatients.toString()} />
         <MetricCard label="New today" value={newPatientsToday.toString()} />
+        <MetricCard
+          label="Confirmed upcoming"
+          value={confirmedUpcomingAppointments.toString()}
+        />
+        <MetricCard
+          label="Payment pending"
+          value={paymentPendingAppointments.toString()}
+        />
       </div>
 
       <section className="rounded-2xl bg-white p-6 text-slate-900 shadow-sm">
@@ -47,6 +74,12 @@ export default async function DoctorDashboardPage() {
           className="mt-5 inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
         >
           View patients
+        </Link>
+        <Link
+          href="/doctor/appointments"
+          className="ml-3 mt-5 inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+        >
+          View appointments
         </Link>
       </section>
     </div>

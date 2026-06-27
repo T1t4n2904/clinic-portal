@@ -23,6 +23,9 @@ A focused patient authentication MVP built with Next.js App Router, TypeScript, 
 - Protected patient dashboard.
 - Hidden doctor login route with doctor-only access.
 - Basic doctor patient directory.
+- Demo appointment booking and payment confirmation.
+- Demo password reset with hashed OTP.
+- Session invalidation through `APP_VERSION`.
 - Logout flow.
 
 ## Local Setup
@@ -76,6 +79,7 @@ SESSION_SECRET="replace-with-a-long-random-secret"
 
 - `DATABASE_URL`: PostgreSQL database connection used by Prisma.
 - `SESSION_SECRET`: Secret key used to sign session cookies.
+- `APP_VERSION`: deployment/version value stored in session cookies to invalidate old sessions.
 - `DOCTOR_EMAIL`, `DOCTOR_PHONE`, `DOCTOR_PASSWORD`, `DOCTOR_NAME`: optional values used by `npm run seed:doctor`.
 
 ## Project Structure
@@ -84,6 +88,8 @@ SESSION_SECRET="replace-with-a-long-random-secret"
 app/
   dashboard/      Protected patient dashboard and logout action
   doctor/         Hidden doctor login, dashboard, and patient directory
+  forgot-password/ Demo reset OTP request
+  reset-password/  Demo password reset completion
   login/          Login page, form, and server action
   register/       Registration page, form, and server action
   verify-otp/     OTP verification page, form, resend, and server actions

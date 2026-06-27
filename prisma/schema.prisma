@@ -12,6 +12,23 @@ enum Role {
   DOCTOR
 }
 
+enum AppointmentMode {
+  ONLINE
+  OFFLINE
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+}
+
+enum AppointmentStatus {
+  PAYMENT_PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
 model User {
   id           String    @id @default(cuid())
   fullName     String
@@ -25,6 +42,7 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   otpCodes     OtpCode[]
+  appointments Appointment[]
 }
 
 model OtpCode {
@@ -40,4 +58,23 @@ model OtpCode {
 
   @@index([userId])
   @@index([phone])
+}
+
+model Appointment {
+  id            String            @id @default(cuid())
+  patientId     String
+  patient       User              @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  mode          AppointmentMode
+  slotStart     DateTime
+  slotLabel     String
+  amount        Int
+  paymentStatus PaymentStatus     @default(PENDING)
+  status        AppointmentStatus @default(PAYMENT_PENDING)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([patientId])
+  @@index([slotStart])
+  @@index([status])
+  @@index([paymentStatus])
 }
