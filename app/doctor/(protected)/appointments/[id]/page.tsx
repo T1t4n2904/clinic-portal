@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { AppointmentStatus } from "@prisma/client";
 import { SubmitButton } from "@/components/SubmitButton";
+import { ConsultationForm } from "@/components/ConsultationForm";
+import { ConsultationView } from "@/components/ConsultationView";
 import { prisma } from "@/lib/prisma";
 import { updateAppointmentStatus } from "../actions";
 
@@ -30,6 +32,16 @@ export default async function DoctorAppointmentDetailPage({
           gender: true,
           phone: true,
           email: true,
+        },
+      },
+      consultation: {
+        select: {
+          chiefComplaint: true,
+          symptoms: true,
+          diagnosis: true,
+          advice: true,
+          followUpDate: true,
+          createdAt: true,
         },
       },
     },
@@ -77,6 +89,12 @@ export default async function DoctorAppointmentDetailPage({
         <Detail label="Status" value={formatStatus(appointment.status)} />
         <Detail label="Payment" value={appointment.paymentStatus} />
       </div>
+
+      {appointment.consultation ? (
+        <ConsultationView consultation={appointment.consultation} />
+      ) : appointment.status === "IN_CONSULTATION" ? (
+        <ConsultationForm appointmentId={appointment.id} />
+      ) : null}
     </section>
   );
 }
@@ -141,11 +159,7 @@ function getAvailableActions(status: AppointmentStatus) {
     ];
   }
 
-  if (status === "IN_CONSULTATION") {
-    primary = [
-      { label: "Mark completed", value: "COMPLETE", variant: "primary" },
-    ];
-  }
+  // IN_CONSULTATION: completion happens via consultation form, no manual complete button.
 
   const canCancel = status !== "COMPLETED" && status !== "CANCELLED";
 

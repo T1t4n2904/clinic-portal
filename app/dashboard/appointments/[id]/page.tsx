@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SubmitButton } from "@/components/SubmitButton";
+import { ConsultationView } from "@/components/ConsultationView";
 import { prisma } from "@/lib/prisma";
 import { requirePatient } from "@/lib/auth";
 import { cancelPatientAppointment, demoPayAppointment } from "../actions";
@@ -30,6 +31,16 @@ export default async function PatientAppointmentDetailPage({
       amount: true,
       paymentStatus: true,
       status: true,
+      consultation: {
+        select: {
+          chiefComplaint: true,
+          symptoms: true,
+          diagnosis: true,
+          advice: true,
+          followUpDate: true,
+          createdAt: true,
+        },
+      },
     },
   });
 
@@ -114,6 +125,10 @@ export default async function PatientAppointmentDetailPage({
           Payment is complete. This demo appointment is confirmed unless the
           appointment status changes.
         </p>
+      ) : null}
+
+      {appointment.consultation ? (
+        <ConsultationView consultation={appointment.consultation} />
       ) : null}
     </section>
   );

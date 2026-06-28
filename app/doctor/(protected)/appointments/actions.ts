@@ -48,7 +48,7 @@ export async function updateAppointmentStatus(formData: FormData) {
 
   const appointment = await prisma.appointment.findUnique({
     where: { id: appointmentId },
-    select: { id: true, status: true },
+    select: { id: true, status: true, consultation: { select: { id: true } } },
   });
 
   if (!appointment) {
@@ -58,6 +58,11 @@ export async function updateAppointmentStatus(formData: FormData) {
   const nextStatus = nextStatusByAction[action][appointment.status];
 
   if (!nextStatus) {
+    redirect(returnTo);
+  }
+
+  // Block COMPLETE unless consultation notes have been recorded.
+  if (action === "COMPLETE" && !appointment.consultation) {
     redirect(returnTo);
   }
 

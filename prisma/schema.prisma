@@ -51,6 +51,8 @@ model User {
   updatedAt    DateTime  @updatedAt
   otpCodes     OtpCode[]
   appointments Appointment[]
+  doctorConsultations Consultation[] @relation("DoctorConsultations")
+  patientConsultations Consultation[] @relation("PatientConsultations")
 }
 
 model OtpCode {
@@ -83,8 +85,30 @@ model Appointment {
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
 
+  consultation   Consultation?
+
   @@index([patientId])
   @@index([slotStart])
   @@index([status])
   @@index([paymentStatus])
+}
+
+model Consultation {
+  id             String       @id @default(cuid())
+  appointmentId  String       @unique
+  appointment    Appointment  @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  doctorId       String
+  doctor         User         @relation("DoctorConsultations", fields: [doctorId], references: [id])
+  patientId      String
+  patient        User         @relation("PatientConsultations", fields: [patientId], references: [id])
+  chiefComplaint String
+  symptoms       String
+  diagnosis      String
+  advice         String
+  followUpDate   DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([doctorId])
+  @@index([patientId])
 }
