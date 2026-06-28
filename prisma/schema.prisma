@@ -25,6 +25,8 @@ enum PaymentStatus {
 enum AppointmentStatus {
   PAYMENT_PENDING
   CONFIRMED
+  CHECKED_IN
+  IN_CONSULTATION
   CANCELLED
   COMPLETED
 }

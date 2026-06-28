@@ -3,11 +3,11 @@ import { notFound } from "next/navigation";
 import { SubmitButton } from "@/components/SubmitButton";
 import { prisma } from "@/lib/prisma";
 import { requirePatient } from "@/lib/auth";
-import { demoPayAppointment } from "../actions";
+import { cancelPatientAppointment, demoPayAppointment } from "../actions";
 
 type AppointmentDetailPageProps = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ paid?: string }>;
+  searchParams: Promise<{ cancelled?: string; paid?: string }>;
 };
 
 export default async function PatientAppointmentDetailPage({
@@ -38,6 +38,8 @@ export default async function PatientAppointmentDetailPage({
   }
 
   const canPay = appointment.paymentStatus === "PENDING";
+  const canCancel =
+    appointment.status !== "COMPLETED" && appointment.status !== "CANCELLED";
 
   return (
     <section className="rounded-2xl bg-white p-8 shadow-sm">
@@ -51,6 +53,12 @@ export default async function PatientAppointmentDetailPage({
       {query.paid === "1" ? (
         <p className="mt-6 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
           Demo payment successful. Your appointment is confirmed.
+        </p>
+      ) : null}
+
+      {query.cancelled === "1" ? (
+        <p className="mt-6 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Appointment cancelled.
         </p>
       ) : null}
 
@@ -69,18 +77,44 @@ export default async function PatientAppointmentDetailPage({
         <Detail label="Status" value={appointment.status.replace("_", " ")} />
       </div>
 
-      {canPay ? (
-        <form action={demoPayAppointment} className="mt-8">
-          <input type="hidden" name="appointmentId" value={appointment.id} />
-          <SubmitButton pendingText="Processing demo payment..." fullWidth={false}>
-            Demo Pay Rs. {appointment.amount}
-          </SubmitButton>
-        </form>
-      ) : (
-        <p className="mt-8 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
-          Payment is complete. This demo appointment is confirmed.
+      <div className="mt-8 flex flex-wrap gap-3">
+        {canPay && canCancel ? (
+          <form action={demoPayAppointment}>
+            <input type="hidden" name="appointmentId" value={appointment.id} />
+            <SubmitButton pendingText="Processing demo payment..." fullWidth={false}>
+              Demo Pay Rs. {appointment.amount}
+            </SubmitButton>
+          </form>
+        ) : null}
+
+        {canCancel ? (
+          <form action={cancelPatientAppointment}>
+            <input type="hidden" name="appointmentId" value={appointment.id} />
+            <SubmitButton
+              pendingText="Cancelling..."
+              fullWidth={false}
+              variant="secondary"
+            >
+              Cancel appointment
+            </SubmitButton>
+          </form>
+        ) : null}
+
+        <button
+          type="button"
+          disabled
+          className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-400"
+        >
+          Reschedule coming soon
+        </button>
+      </div>
+
+      {!canPay ? (
+        <p className="mt-5 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
+          Payment is complete. This demo appointment is confirmed unless the
+          appointment status changes.
         </p>
-      )}
+      ) : null}
     </section>
   );
 }
