@@ -18,10 +18,10 @@ export function SubmitButton({
 }: SubmitButtonProps) {
   const { pending } = useFormStatus();
   const variantClasses = {
-    primary: "bg-blue-600 text-white hover:bg-blue-700",
+    primary: "bg-emerald-800 text-white hover:bg-emerald-700",
     secondary:
       "border border-slate-300 bg-white text-slate-700 hover:bg-slate-100",
-    ghost: "bg-transparent text-blue-600 hover:bg-blue-50",
+    ghost: "bg-transparent text-emerald-800 hover:bg-emerald-50",
   };
 
   return (

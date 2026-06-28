@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -48,63 +49,71 @@ const navItems = [
 ];
 
 export function PatientShell({ fullName, children }: PatientShellProps) {
+  const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const sidebarWidth = collapsed ? "md:w-20" : "md:w-72";
-  const contentMargin = collapsed ? "md:ml-20" : "md:ml-72";
+  const sidebarWidth = collapsed ? "md:w-16" : "md:w-60";
+  const contentMargin = collapsed ? "md:ml-16" : "md:ml-60";
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-slate-50 text-slate-900">
+    <main className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col md:flex-row">
       <aside
-        className={`border-b border-slate-200 bg-white p-4 shadow-sm transition-all md:fixed md:inset-y-0 md:left-0 ${sidebarWidth} md:border-b-0 md:border-r md:p-5`}
+        className={`border-b border-slate-200 bg-white p-3 flex flex-col justify-between transition-all md:fixed md:inset-y-0 md:left-0 ${sidebarWidth} md:border-b-0 md:border-r z-40`}
       >
-        <div className="flex items-start justify-between gap-3">
-          <div className={collapsed ? "md:hidden" : ""}>
-            <p className="text-sm font-semibold text-blue-600">Clinic Portal</p>
-            <p className="mt-1 text-xs text-slate-500">Signed in as {fullName}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setCollapsed((current) => !current)}
-            className="rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-600 transition hover:bg-slate-100 active:scale-[0.98]"
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            <span
-              className={`inline-block transition-transform duration-300 ${
-                collapsed ? "rotate-180" : ""
-              }`}
+        <div>
+          <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3 mb-4">
+            <div className={`transition-all duration-300 ${collapsed ? "md:opacity-0 md:w-0 overflow-hidden" : "w-auto"}`}>
+              <p className="text-xs font-bold uppercase tracking-wider text-emerald-800">Clinic Portal</p>
+              <p className="mt-0.5 text-[10px] text-slate-500 truncate max-w-[140px]" title={fullName}>
+                {fullName}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setCollapsed((current) => !current)}
+              className="hidden md:flex rounded-lg border border-slate-200 p-1 text-slate-400 hover:text-slate-700 transition hover:bg-slate-50 active:scale-[0.98]"
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              &laquo;
-            </span>
-          </button>
+              <span className={`inline-block text-xs transition-transform duration-300 font-bold ${collapsed ? "rotate-180" : ""}`}>
+                &laquo;
+              </span>
+            </button>
+          </div>
+
+          <nav className="flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-visible">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  title={item.label}
+                  className={`flex items-center whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-medium transition active:scale-[0.98] ${
+                    collapsed ? "md:justify-center" : "gap-2.5"
+                  } ${
+                    isActive
+                      ? "bg-emerald-50 text-emerald-950 border-l-2 border-emerald-800 pl-[8px]"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  }`}
+                >
+                  <svg
+                    aria-hidden="true"
+                    className="h-4.5 w-4.5 shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    {item.icon}
+                  </svg>
+                  <span className={collapsed ? "md:hidden" : ""}>{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
         </div>
 
-        <nav className="mt-6 flex gap-2 overflow-x-auto text-sm md:mt-8 md:block md:space-y-2 md:overflow-visible">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              title={item.label}
-              className={`flex whitespace-nowrap rounded-lg px-3 py-2 font-medium text-slate-700 transition hover:bg-slate-100 active:scale-[0.98] ${
-                collapsed ? "md:justify-center" : "gap-3"
-              }`}
-            >
-              <svg
-                aria-hidden="true"
-                className="h-5 w-5 shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="1.8"
-              >
-                {item.icon}
-              </svg>
-              <span className={collapsed ? "md:hidden" : ""}>{item.label}</span>
-            </Link>
-          ))}
-        </nav>
-
-        <form action={logoutPatient} className="mt-8">
-          <SubmitButton variant="secondary" pendingText="Logging out...">
+        <form action={logoutPatient} className="mt-4 md:mt-0 border-t border-slate-100 pt-3">
+          <SubmitButton variant="ghost" pendingText="Leaving...">
             <span className={collapsed ? "md:hidden" : ""}>Logout</span>
             <span className={collapsed ? "hidden md:inline" : "hidden"}>Exit</span>
           </SubmitButton>
@@ -112,7 +121,7 @@ export function PatientShell({ fullName, children }: PatientShellProps) {
       </aside>
 
       <section
-        className={`min-w-0 px-4 py-6 transition-all ${contentMargin} md:h-screen md:overflow-y-auto md:px-8 md:py-8`}
+        className={`flex-1 min-w-0 transition-all ${contentMargin} md:h-screen md:overflow-y-auto p-4 md:p-6 lg:p-8`}
       >
         {children}
       </section>

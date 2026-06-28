@@ -47,11 +47,11 @@ export default async function DoctorAppointmentsPage({
   });
 
   return (
-    <section className="rounded-xl bg-white p-5 text-slate-900 shadow-sm md:p-6">
+    <section className="rounded-lg border border-slate-200 bg-white p-5 text-slate-900 shadow-sm md:p-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div>
-          <p className="text-sm font-medium text-blue-600">Appointments</p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Appointments</p>
+          <h1 className="mt-1 text-lg font-bold tracking-tight">
             Clinic appointments
           </h1>
           <p className="mt-2 text-sm text-slate-600">
@@ -61,21 +61,21 @@ export default async function DoctorAppointmentsPage({
         </div>
         <Link
           href="/doctor/dashboard"
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 active:scale-[0.98]"
+          className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
         >
-          Back to dashboard
+          ← Back
         </Link>
       </div>
 
-      <div className="mt-5 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         {filters.map((filter) => (
           <Link
             key={filter.value}
             href={`/doctor/appointments?filter=${filter.value}`}
-            className={`rounded-full border px-3 py-1.5 text-sm font-medium transition active:scale-[0.98] ${
+            className={`rounded-full border px-3 py-1 text-xs font-semibold transition active:scale-[0.98] ${
               activeFilter === filter.value
-                ? "border-blue-600 bg-blue-600 text-white"
-                : "border-slate-300 text-slate-700 hover:bg-slate-100"
+                ? "border-emerald-800 bg-emerald-800 text-white"
+                : "border-slate-300 text-slate-600 hover:bg-slate-100"
             }`}
           >
             {filter.label}
@@ -107,7 +107,7 @@ export default async function DoctorAppointmentsPage({
                   <td className="py-3 pr-4">
                     <Link
                       href={`/doctor/appointments/${appointment.id}`}
-                      className="font-medium text-slate-950 hover:text-blue-700"
+                      className="font-semibold text-slate-900 hover:text-emerald-800 hover:underline"
                     >
                       {appointment.patient.fullName}
                     </Link>
@@ -184,72 +184,92 @@ function AppointmentActions({
   status: AppointmentStatus;
   returnTo: string;
 }) {
-  const actions = getAvailableActions(status);
+  const btnBase =
+    "inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] font-semibold border transition active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed";
 
-  if (actions.length === 0) {
-    return (
-      <Link
-        href={`/doctor/appointments/${appointmentId}`}
-        className="font-medium text-blue-600 hover:text-blue-700"
-      >
-        View
-      </Link>
-    );
+  switch (status) {
+    case "CONFIRMED":
+      return (
+        <div className="flex gap-1">
+          <form action={updateAppointmentStatus}>
+            <input type="hidden" name="appointmentId" value={appointmentId} />
+            <input type="hidden" name="action" value="CHECK_IN" />
+            <input type="hidden" name="returnTo" value={returnTo} />
+            <button
+              type="submit"
+              title="Check in patient"
+              className={`${btnBase} bg-emerald-800 border-emerald-800 text-white hover:bg-emerald-700`}
+            >
+              ✓ Check In
+            </button>
+          </form>
+          <form action={updateAppointmentStatus}>
+            <input type="hidden" name="appointmentId" value={appointmentId} />
+            <input type="hidden" name="action" value="CANCEL" />
+            <input type="hidden" name="returnTo" value={returnTo} />
+            <button
+              type="submit"
+              title="Cancel appointment"
+              className={`${btnBase} bg-white border-slate-200 text-slate-500 hover:bg-slate-50`}
+            >
+              ✕
+            </button>
+          </form>
+        </div>
+      );
+
+    case "CHECKED_IN":
+      return (
+        <div className="flex gap-1">
+          <form action={updateAppointmentStatus}>
+            <input type="hidden" name="appointmentId" value={appointmentId} />
+            <input type="hidden" name="action" value="START_CONSULTATION" />
+            <input type="hidden" name="returnTo" value={returnTo} />
+            <button
+              type="submit"
+              title="Start consultation"
+              className={`${btnBase} bg-emerald-800 border-emerald-800 text-white hover:bg-emerald-700`}
+            >
+              ▶ Start
+            </button>
+          </form>
+          <form action={updateAppointmentStatus}>
+            <input type="hidden" name="appointmentId" value={appointmentId} />
+            <input type="hidden" name="action" value="CANCEL" />
+            <input type="hidden" name="returnTo" value={returnTo} />
+            <button
+              type="submit"
+              title="Cancel appointment"
+              className={`${btnBase} bg-white border-slate-200 text-slate-500 hover:bg-slate-50`}
+            >
+              ✕
+            </button>
+          </form>
+        </div>
+      );
+
+    case "IN_CONSULTATION":
+      return (
+        <Link
+          href={`/doctor/appointments/${appointmentId}`}
+          title="Resume consultation"
+          className={`${btnBase} bg-emerald-800 border-emerald-800 text-white hover:bg-emerald-700`}
+        >
+          🩺 Resume
+        </Link>
+      );
+
+    default:
+      return (
+        <Link
+          href={`/doctor/appointments/${appointmentId}`}
+          title="View consultation details"
+          className={`${btnBase} bg-white border-slate-200 text-slate-700 hover:bg-slate-50`}
+        >
+          👁 View
+        </Link>
+      );
   }
-
-  return (
-    <div className="flex flex-wrap gap-2">
-      {actions.map((action) => (
-        <form key={action.value} action={updateAppointmentStatus}>
-          <input type="hidden" name="appointmentId" value={appointmentId} />
-          <input type="hidden" name="action" value={action.value} />
-          <input type="hidden" name="returnTo" value={returnTo} />
-          <SubmitButton
-            fullWidth={false}
-            variant={action.variant}
-            pendingText="Updating..."
-          >
-            {action.label}
-          </SubmitButton>
-        </form>
-      ))}
-    </div>
-  );
-}
-
-function getAvailableActions(status: AppointmentStatus) {
-  let primary: Array<{
-    label: string;
-    value: string;
-    variant: "primary" | "secondary" | "ghost";
-  }> = [];
-
-  if (status === "CONFIRMED") {
-    primary = [{ label: "Check in", value: "CHECK_IN", variant: "primary" }];
-  }
-
-  if (status === "CHECKED_IN") {
-    primary = [
-      {
-        label: "Start",
-        value: "START_CONSULTATION",
-        variant: "primary",
-      },
-    ];
-  }
-
-  if (status === "IN_CONSULTATION") {
-    primary = [{ label: "Complete", value: "COMPLETE", variant: "primary" }];
-  }
-
-  const canCancel = status !== "COMPLETED" && status !== "CANCELLED";
-
-  return canCancel
-    ? [
-        ...primary,
-        { label: "Cancel", value: "CANCEL", variant: "secondary" as const },
-      ]
-    : primary;
 }
 
 function formatStatus(status: AppointmentStatus) {

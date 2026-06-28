@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -15,53 +16,64 @@ type DoctorShellProps = {
 const navItems = [
   {
     href: "/doctor/dashboard",
-    label: "Dashboard",
+    label: "Today",
     icon: (
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
-        d="M4 13h6V4H4v9zm10 7h6V4h-6v16zM4 20h6v-3H4v3z"
+        d="M4 6h16M4 12h16M4 18h16"
       />
     ),
   },
   {
-    href: "/doctor/appointments",
-    label: "Appointments",
+    href: "/doctor/patients",
+    label: "Patients",
     icon: (
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
-        d="M7 3v3m10-3v3M4 9h16M6 5h12a2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2zm2 8h3m3 0h2m-8 4h3"
+        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
       />
     ),
   },
   {
-    href: "/doctor/availability",
-    label: "Availability",
+    href: "/doctor/reports",
+    label: "Reports",
     icon: (
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
-        d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z"
+        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+      />
+    ),
+  },
+  {
+    href: "/doctor/settings",
+    label: "Settings",
+    icon: (
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
       />
     ),
   },
 ];
 
 export function DoctorShell({ fullName, children }: DoctorShellProps) {
+  const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<string[]>([
     "Doctor console ready.",
     "Appointment updates will appear here.",
   ]);
-  const sidebarWidth = collapsed ? "md:w-20" : "md:w-72";
-  const contentMargin = collapsed ? "md:ml-20" : "md:ml-72";
+  const sidebarWidth = collapsed ? "md:w-16" : "md:w-60";
+  const contentMargin = collapsed ? "md:ml-16" : "md:ml-60";
 
   useEffect(() => {
     function loadNotifications() {
       const stored = window.localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
-
       if (stored) {
         setNotifications(JSON.parse(stored) as string[]);
       }
@@ -78,12 +90,13 @@ export function DoctorShell({ fullName, children }: DoctorShellProps) {
   }, []);
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-slate-950 text-slate-100">
-      <div className="fixed right-3 top-3 z-50 md:right-5">
+    <main className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col md:flex-row">
+      {/* Notifications Drawer */}
+      <div className="fixed right-4 top-4 z-50">
         <button
           type="button"
           onClick={() => setNotificationsOpen((current) => !current)}
-          className="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-slate-900 text-slate-100 shadow-md transition hover:bg-slate-800 active:scale-[0.98]"
+          className="relative flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 active:scale-[0.98]"
           aria-label={`${notifications.length} notifications`}
         >
           <svg
@@ -92,7 +105,7 @@ export function DoctorShell({ fullName, children }: DoctorShellProps) {
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
-            strokeWidth="1.8"
+            strokeWidth="2"
           >
             <path
               strokeLinecap="round"
@@ -100,28 +113,28 @@ export function DoctorShell({ fullName, children }: DoctorShellProps) {
               d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 11-6 0"
             />
           </svg>
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+          <span className="absolute -right-1 -top-1 flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-emerald-700 px-1 text-[8px] font-bold text-white">
             {notifications.length}
           </span>
         </button>
 
         {notificationsOpen ? (
-          <div className="absolute right-0 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-3 text-slate-900 shadow-xl">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-blue-600">Notifications</p>
+          <div className="absolute right-0 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-3 text-slate-900 shadow-lg z-50">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-2">
+              <p className="text-xs font-semibold text-emerald-800">Notifications</p>
               <button
                 type="button"
                 onClick={() => setNotificationsOpen(false)}
-                className="text-sm text-slate-500 hover:text-slate-900"
+                className="text-[11px] text-slate-500 hover:text-slate-900"
               >
                 Close
               </button>
             </div>
-            <div className="mt-3 max-h-72 space-y-2 overflow-y-auto">
+            <div className="mt-2 max-h-60 space-y-1.5 overflow-y-auto pt-1">
               {notifications.map((notification, index) => (
                 <div
                   key={`${notification}-${index}`}
-                  className="rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-sm text-slate-700"
+                  className="rounded-lg border border-slate-100 bg-slate-50 p-2 text-xs text-slate-600 leading-normal"
                 >
                   {notification}
                 </div>
@@ -131,68 +144,78 @@ export function DoctorShell({ fullName, children }: DoctorShellProps) {
         ) : null}
       </div>
 
+      {/* Sidebar Navigation */}
       <aside
-        className={`border-b border-white/10 bg-slate-950 p-4 shadow-sm transition-all md:fixed md:inset-y-0 md:left-0 ${sidebarWidth} md:border-b-0 md:border-r md:p-5`}
+        className={`border-b border-slate-200 bg-white p-3 flex flex-col justify-between transition-all md:fixed md:inset-y-0 md:left-0 ${sidebarWidth} md:border-b-0 md:border-r z-40`}
       >
-        <div className="flex items-start justify-between gap-3">
-          <div className={collapsed ? "md:hidden" : ""}>
-            <p className="text-sm font-semibold text-blue-300">Doctor Console</p>
-            <p className="mt-1 text-xs text-slate-400">Signed in as {fullName}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setCollapsed((current) => !current)}
-            className="rounded-lg border border-white/10 px-2 py-1 text-sm text-slate-200 transition hover:bg-white/10 active:scale-[0.98]"
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            <span
-              className={`inline-block transition-transform duration-300 ${
-                collapsed ? "rotate-180" : ""
-              }`}
+        <div>
+          <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3 mb-4">
+            <div className={`transition-all duration-300 ${collapsed ? "md:opacity-0 md:w-0 overflow-hidden" : "w-auto"}`}>
+              <p className="text-xs font-bold uppercase tracking-wider text-emerald-800">Ayurveda Clinic</p>
+              <p className="mt-0.5 text-[10px] text-slate-500 truncate max-w-[140px]" title={fullName}>
+                Dr. {fullName}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setCollapsed((current) => !current)}
+              className="hidden md:flex rounded-lg border border-slate-200 p-1 text-slate-400 hover:text-slate-700 transition hover:bg-slate-50 active:scale-[0.98]"
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              &laquo;
-            </span>
-          </button>
+              <span className={`inline-block text-xs transition-transform duration-300 font-bold ${collapsed ? "rotate-180" : ""}`}>
+                &laquo;
+              </span>
+            </button>
+          </div>
+
+          <nav className="flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-visible">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  title={item.label}
+                  className={`flex items-center whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-medium transition active:scale-[0.98] ${
+                    collapsed ? "md:justify-center" : "gap-2.5"
+                  } ${
+                    isActive
+                      ? "bg-emerald-50 text-emerald-950 border-l-2 border-emerald-800 pl-[8px]"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  }`}
+                >
+                  <svg
+                    aria-hidden="true"
+                    className="h-4.5 w-4.5 shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    {item.icon}
+                  </svg>
+                  <span className={collapsed ? "md:hidden" : ""}>{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
         </div>
 
-        <nav className="mt-6 flex gap-2 overflow-x-auto text-sm md:mt-8 md:block md:space-y-2 md:overflow-visible">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              title={item.label}
-              className={`flex whitespace-nowrap rounded-lg px-3 py-2 font-medium text-slate-100 transition hover:bg-white/10 active:scale-[0.98] ${
-                collapsed ? "md:justify-center" : "gap-3"
-              }`}
-            >
-              <svg
-                aria-hidden="true"
-                className="h-5 w-5 shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="1.8"
-              >
-                {item.icon}
-              </svg>
-              <span className={collapsed ? "md:hidden" : ""}>{item.label}</span>
-            </Link>
-          ))}
-        </nav>
-
-        <form action={logoutDoctor} className="mt-8">
-          <SubmitButton variant="secondary" pendingText="Logging out...">
+        <form action={logoutDoctor} className="mt-4 md:mt-0 border-t border-slate-100 pt-3">
+          <SubmitButton variant="ghost" pendingText="Leaving...">
             <span className={collapsed ? "md:hidden" : ""}>Logout</span>
             <span className={collapsed ? "hidden md:inline" : "hidden"}>Exit</span>
           </SubmitButton>
         </form>
       </aside>
 
+      {/* Main Content Area */}
       <section
-        className={`min-w-0 px-4 py-6 transition-all ${contentMargin} md:h-screen md:overflow-y-auto md:px-8 md:py-8`}
+        className={`flex-1 min-w-0 transition-all ${contentMargin} md:h-screen md:overflow-y-auto p-4 md:p-6 lg:p-8`}
       >
         {children}
       </section>
     </main>
   );
 }
+

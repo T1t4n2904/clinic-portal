@@ -73,9 +73,9 @@ export function AppointmentForm() {
               key={value}
               type="button"
               onClick={() => selectMode(value as AppointmentModeValue)}
-              className={`rounded-xl border p-4 text-left text-sm transition active:scale-[0.98] ${
+              className={`rounded-lg border p-4 text-left text-sm transition active:scale-[0.98] ${
                 mode === value
-                  ? "border-blue-500 bg-blue-50 text-blue-800"
+                  ? "border-emerald-800 bg-emerald-50 text-emerald-955 border-l-4"
                   : "border-slate-200 hover:bg-slate-50"
               }`}
             >
@@ -104,7 +104,7 @@ export function AppointmentForm() {
               setDate(event.target.value);
               setSlotId("");
             }}
-            className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+            className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-800"
           />
         </div>
         <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
@@ -138,9 +138,9 @@ export function AppointmentForm() {
                 key={slot.id}
                 type="button"
                 onClick={() => selectSlot(slot.id)}
-                className={`rounded-full border px-4 py-2 text-sm font-medium transition active:scale-[0.98] ${
+                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition active:scale-[0.98] ${
                   slotId === slot.id
-                    ? "border-blue-600 bg-blue-600 text-white"
+                    ? "border-emerald-800 bg-emerald-800 text-white"
                     : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
                 }`}
               >

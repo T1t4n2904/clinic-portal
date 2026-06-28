@@ -26,23 +26,23 @@ export default async function DashboardPage() {
   });
 
   return (
-    <div className="space-y-5">
-      <section className="rounded-xl bg-white p-5 shadow-sm md:p-6">
-        <p className="text-sm font-medium text-blue-600">Patient Home</p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight">
+    <div className="space-y-4">
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Patient Home</p>
+        <h1 className="mt-1 text-lg font-bold tracking-tight text-slate-900">
           Welcome, {user.fullName}
         </h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+        <p className="mt-1.5 max-w-2xl text-xs leading-normal text-slate-600">
           Track your next clinic appointment, payment status, and visit progress
           from one place.
         </p>
       </section>
 
-      <section className="rounded-xl bg-white p-5 shadow-sm md:p-6">
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
           <div>
-            <p className="text-sm font-medium text-blue-600">Next appointment</p>
-            <h2 className="mt-1 text-xl font-semibold">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Next appointment</p>
+            <h2 className="mt-1 text-sm font-bold text-slate-900">
               {nextAppointment ? nextAppointment.slotLabel : "No upcoming appointment"}
             </h2>
           </div>
@@ -52,7 +52,7 @@ export default async function DashboardPage() {
                 ? `/dashboard/appointments/${nextAppointment.id}`
                 : "/dashboard/appointments/new"
             }
-            className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-blue-700 active:scale-[0.98]"
+            className="inline-flex items-center rounded-lg bg-emerald-800 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 active:scale-[0.98]"
           >
             {nextAppointment ? "View appointment" : "Book appointment"}
           </Link>
@@ -79,16 +79,16 @@ export default async function DashboardPage() {
         )}
       </section>
 
-      <section className="rounded-xl border border-dashed border-slate-300 bg-white p-5 shadow-sm md:p-6">
-        <p className="text-sm font-medium text-blue-600">Profile Settings</p>
-        <h2 className="mt-1 text-xl font-semibold">Keep your profile current</h2>
-        <p className="mt-2 text-sm text-slate-600">
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Profile Settings</p>
+        <h2 className="mt-1 text-sm font-bold text-slate-900">Keep your profile current</h2>
+        <p className="mt-1.5 text-xs text-slate-600">
           Full personal details are managed in profile settings, not on the home
           dashboard.
         </p>
         <Link
           href="/dashboard/profile"
-          className="mt-4 inline-flex rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 active:scale-[0.98]"
+          className="mt-3 inline-flex rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-[0.98]"
         >
           Review profile
         </Link>

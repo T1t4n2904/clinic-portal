@@ -6,6 +6,8 @@ import type { AppointmentMode } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requirePatient } from "@/lib/auth";
 import { DEMO_APPOINTMENT_AMOUNT, getDemoSlot } from "@/lib/appointments";
+import { processDemoPayment } from "@/lib/payments/demo";
+import { sendDemoNotification } from "@/lib/notifications/demo";
 
 export type AppointmentActionState = {
   errors?: Record<string, string>;
@@ -69,12 +71,14 @@ export async function demoPayAppointment(formData: FormData) {
     redirect("/dashboard/appointments");
   }
 
-  await prisma.appointment.update({
-    where: { id: appointment.id },
-    data: {
-      paymentStatus: "PAID",
-      status: "CONFIRMED",
-    },
+  await processDemoPayment(appointment.id, appointment.amount);
+
+  await sendDemoNotification({
+    userId: patient.id,
+    appointmentId: appointment.id,
+    type: "APPOINTMENT_CONFIRMED",
+    recipient: patient.phone,
+    message: `Namaste ${patient.fullName}, your appointment for ${appointment.slotLabel} has been confirmed.`,
   });
 
   redirect(`/dashboard/appointments/${appointment.id}?paid=1`);

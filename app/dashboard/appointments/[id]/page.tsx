@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SubmitButton } from "@/components/SubmitButton";
 import { ConsultationView } from "@/components/ConsultationView";
+import { PrescriptionView } from "@/components/PrescriptionView";
 import { prisma } from "@/lib/prisma";
 import { requirePatient } from "@/lib/auth";
 import { cancelPatientAppointment, demoPayAppointment } from "../actions";
@@ -39,7 +40,33 @@ export default async function PatientAppointmentDetailPage({
           advice: true,
           followUpDate: true,
           createdAt: true,
+          prescription: {
+            include: {
+              medicines: {
+                orderBy: { sortOrder: "asc" },
+              },
+            },
+          },
         },
+      },
+      payments: {
+        select: {
+          id: true,
+          provider: true,
+          status: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+      },
+      notificationLogs: {
+        select: {
+          id: true,
+          channel: true,
+          type: true,
+          status: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
       },
     },
   });
@@ -53,29 +80,29 @@ export default async function PatientAppointmentDetailPage({
     appointment.status !== "COMPLETED" && appointment.status !== "CANCELLED";
 
   return (
-    <section className="rounded-2xl bg-white p-8 shadow-sm">
+    <section className="rounded-lg border border-slate-200 bg-white p-5 text-slate-900 shadow-sm md:p-6">
       <Link
         href="/dashboard/appointments"
-        className="text-sm font-medium text-blue-600 hover:text-blue-700"
+        className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
       >
-        Back to appointments
+        ← Back
       </Link>
 
       {query.paid === "1" ? (
-        <p className="mt-6 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        <p className="mt-4 rounded-lg bg-emerald-50 px-4 py-2.5 text-xs text-emerald-800 border border-emerald-100">
           Demo payment successful. Your appointment is confirmed.
         </p>
       ) : null}
 
       {query.cancelled === "1" ? (
-        <p className="mt-6 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p className="mt-4 rounded-lg bg-amber-50 px-4 py-2.5 text-xs text-amber-800 border border-amber-100">
           Appointment cancelled.
         </p>
       ) : null}
 
-      <div className="mt-6">
-        <p className="text-sm font-medium text-blue-600">Appointment Detail</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight">
+      <div className="mt-4 border-b border-slate-100 pb-4">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Appointment Detail</p>
+        <h1 className="mt-1 text-lg font-bold tracking-tight">
           {appointment.slotLabel}
         </h1>
       </div>
@@ -90,12 +117,22 @@ export default async function PatientAppointmentDetailPage({
 
       <div className="mt-8 flex flex-wrap gap-3">
         {canPay && canCancel ? (
-          <form action={demoPayAppointment}>
-            <input type="hidden" name="appointmentId" value={appointment.id} />
-            <SubmitButton pendingText="Processing demo payment..." fullWidth={false}>
-              Demo Pay Rs. {appointment.amount}
-            </SubmitButton>
-          </form>
+          <>
+            <form action={demoPayAppointment}>
+              <input type="hidden" name="appointmentId" value={appointment.id} />
+              <SubmitButton pendingText="Processing demo payment..." fullWidth={false}>
+                Demo Pay Rs. {appointment.amount}
+              </SubmitButton>
+            </form>
+            <button
+              type="button"
+              disabled
+              title="Razorpay credentials missing. Please use Demo Pay for testing."
+              className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-semibold text-slate-400 cursor-not-allowed"
+            >
+              Pay Online (Razorpay coming soon)
+            </button>
+          </>
         ) : null}
 
         {canCancel ? (
@@ -127,8 +164,52 @@ export default async function PatientAppointmentDetailPage({
         </p>
       ) : null}
 
+      {/* Payment Records History */}
+      {appointment.payments.length > 0 ? (
+        <div className="mt-6 border-t border-slate-100 pt-5">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Payment History</h3>
+          <div className="space-y-1.5">
+            {appointment.payments.map((p) => (
+              <div key={p.id} className="flex justify-between items-center text-xs text-slate-600 bg-slate-50 rounded border border-slate-100 px-3 py-1.5">
+                <span>{p.provider} Payment</span>
+                <span className="font-semibold text-slate-900">{p.status}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {/* Notification Logs History */}
+      {appointment.notificationLogs.length > 0 ? (
+        <div className="mt-6 border-t border-slate-100 pt-5">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Notification Logs</h3>
+          <div className="space-y-1.5">
+            {appointment.notificationLogs.map((log) => (
+              <div key={log.id} className="flex justify-between items-center text-xs text-slate-600 bg-slate-50 rounded border border-slate-100 px-3 py-1.5">
+                <div>
+                  <span className="font-semibold text-slate-900">{log.type.replace("_", " ")}</span>
+                  <span className="text-[10px] text-slate-400 ml-1.5">({log.channel})</span>
+                </div>
+                <span className={`font-semibold ${log.status === "SENT" ? "text-emerald-700" : "text-red-600"}`}>
+                  {log.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {appointment.consultation ? (
-        <ConsultationView consultation={appointment.consultation} />
+        <>
+          <ConsultationView consultation={appointment.consultation} />
+          {appointment.consultation.prescription ? (
+            <PrescriptionView prescription={appointment.consultation.prescription} />
+          ) : (
+            <p className="mt-4 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded p-3 text-center">
+              Prescription will appear here after doctor shares it.
+            </p>
+          )}
+        </>
       ) : null}
     </section>
   );

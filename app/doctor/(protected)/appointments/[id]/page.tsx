@@ -4,6 +4,8 @@ import type { AppointmentStatus } from "@prisma/client";
 import { SubmitButton } from "@/components/SubmitButton";
 import { ConsultationForm } from "@/components/ConsultationForm";
 import { ConsultationView } from "@/components/ConsultationView";
+import { PrescriptionForm } from "@/components/PrescriptionForm";
+import { PrescriptionView } from "@/components/PrescriptionView";
 import { prisma } from "@/lib/prisma";
 import { updateAppointmentStatus } from "../actions";
 
@@ -36,13 +38,40 @@ export default async function DoctorAppointmentDetailPage({
       },
       consultation: {
         select: {
+          id: true,
           chiefComplaint: true,
           symptoms: true,
           diagnosis: true,
           advice: true,
           followUpDate: true,
           createdAt: true,
+          prescription: {
+            include: {
+              medicines: {
+                orderBy: { sortOrder: "asc" },
+              },
+            },
+          },
         },
+      },
+      payments: {
+        select: {
+          id: true,
+          provider: true,
+          status: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+      },
+      notificationLogs: {
+        select: {
+          id: true,
+          channel: true,
+          type: true,
+          status: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
       },
     },
   });
@@ -52,18 +81,18 @@ export default async function DoctorAppointmentDetailPage({
   }
 
   return (
-    <section className="rounded-xl bg-white p-5 text-slate-900 shadow-sm md:p-6">
+    <section className="rounded-lg border border-slate-200 bg-white p-5 text-slate-900 shadow-sm md:p-6">
       <Link
         href="/doctor/appointments"
-        className="text-sm font-medium text-blue-600 hover:text-blue-700"
+        className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
       >
-        Back to appointments
+        ← Back
       </Link>
 
-      <div className="mt-5 flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
+      <div className="mt-4 flex flex-col justify-between gap-4 lg:flex-row lg:items-start border-b border-slate-100 pb-4">
         <div>
-          <p className="text-sm font-medium text-blue-600">Appointment Detail</p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Appointment Detail</p>
+          <h1 className="mt-1 text-lg font-bold tracking-tight">
             {appointment.patient.fullName}
           </h1>
           <p className="mt-2 text-sm text-slate-600">
@@ -90,8 +119,50 @@ export default async function DoctorAppointmentDetailPage({
         <Detail label="Payment" value={appointment.paymentStatus} />
       </div>
 
+      {/* Payment History */}
+      {appointment.payments.length > 0 ? (
+        <div className="mt-6 border-t border-slate-100 pt-5">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Payment History</h3>
+          <div className="space-y-1.5">
+            {appointment.payments.map((p) => (
+              <div key={p.id} className="flex justify-between items-center text-xs text-slate-600 bg-slate-50 rounded border border-slate-100 px-3 py-1.5">
+                <span>{p.provider} Payment</span>
+                <span className="font-semibold text-slate-900">{p.status}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {/* Notification Logs */}
+      {appointment.notificationLogs.length > 0 ? (
+        <div className="mt-6 border-t border-slate-100 pt-5">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Notification Logs</h3>
+          <div className="space-y-1.5">
+            {appointment.notificationLogs.map((log) => (
+              <div key={log.id} className="flex justify-between items-center text-xs text-slate-600 bg-slate-50 rounded border border-slate-100 px-3 py-1.5">
+                <div>
+                  <span className="font-semibold text-slate-900">{log.type.replace("_", " ")}</span>
+                  <span className="text-[10px] text-slate-400 ml-1.5">({log.channel})</span>
+                </div>
+                <span className={`font-semibold ${log.status === "SENT" ? "text-emerald-700" : "text-red-600"}`}>
+                  {log.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {appointment.consultation ? (
-        <ConsultationView consultation={appointment.consultation} />
+        <>
+          <ConsultationView consultation={appointment.consultation} />
+          {appointment.consultation.prescription ? (
+            <PrescriptionView prescription={appointment.consultation.prescription} />
+          ) : appointment.status === "COMPLETED" ? (
+            <PrescriptionForm appointmentId={appointment.id} />
+          ) : null}
+        </>
       ) : appointment.status === "IN_CONSULTATION" ? (
         <ConsultationForm appointmentId={appointment.id} />
       ) : null}
