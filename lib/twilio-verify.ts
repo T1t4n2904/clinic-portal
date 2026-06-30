@@ -14,10 +14,7 @@ export function normalizeVerifyPhone(phone: string): string {
 }
 
 export function isTwilioVerifyConfigured(): boolean {
-  const sid = process.env.TWILIO_ACCOUNT_SID;
-  const token = process.env.TWILIO_AUTH_TOKEN;
-  const serviceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
-  return Boolean(sid && token && serviceSid);
+  return false;
 }
 
 export async function sendVerificationOtp(phone: string): Promise<{ success: boolean; error?: string }> {
