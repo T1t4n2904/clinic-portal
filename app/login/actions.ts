@@ -54,9 +54,51 @@ export async function loginPatient(
   }
 
   if (!user.phoneVerified) {
-    return { errors: { identifier: "Please verify your phone number before logging in." } };
+    const { isTwilioVerifyConfigured, sendVerificationOtp } = await import("@/lib/twilio-verify");
+
+    if (isTwilioVerifyConfigured()) {
+      const otpResult = await sendVerificationOtp(user.phone);
+      if (!otpResult.success) {
+        return { errors: { identifier: otpResult.error || "Failed to send WhatsApp verification OTP code." } };
+      }
+      redirect(`/verify-otp?phone=${user.phone}`);
+    } else {
+      await prisma.otpCode.updateMany({
+        where: {
+          userId: user.id,
+          purpose: "PHONE_VERIFICATION",
+          consumed: false,
+        },
+        data: { consumed: true },
+      });
+
+      const otp = generateOtp();
+      await prisma.otpCode.create({
+        data: {
+          phone: user.phone,
+          otpHash: await hashOtp(otp),
+          purpose: "PHONE_VERIFICATION",
+          expiresAt: getOtpExpiry(5),
+          userId: user.id,
+        },
+      });
+
+      console.log("DEV REGISTRATION OTP FOR UNVERIFIED LOGIN:", otp);
+      redirect(`/verify-otp?phone=${user.phone}&devOtp=${otp}`);
+    }
   }
 
+  const { isTwilioVerifyConfigured, sendVerificationOtp } = await import("@/lib/twilio-verify");
+
+  if (isTwilioVerifyConfigured()) {
+    const otpResult = await sendVerificationOtp(user.phone);
+    if (!otpResult.success) {
+      return { errors: { identifier: otpResult.error || "Failed to send WhatsApp verification OTP code via Twilio Verify." } };
+    }
+    redirect(`/verify-login-otp?challenge=twilio_${user.phone}`);
+  }
+
+  // Fallback to existing demo OTP flow
   await prisma.otpCode.updateMany({
     where: {
       userId: user.id,

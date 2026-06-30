@@ -20,6 +20,7 @@ const nextStatusByAction: Record<
     CONFIRMED: "CHECKED_IN",
   },
   START_CONSULTATION: {
+    CONFIRMED: "IN_CONSULTATION",
     CHECKED_IN: "IN_CONSULTATION",
   },
   COMPLETE: {
@@ -74,5 +75,13 @@ export async function updateAppointmentStatus(formData: FormData) {
   revalidatePath("/doctor/dashboard");
   revalidatePath("/doctor/appointments");
   revalidatePath(`/doctor/appointments/${appointment.id}`);
-  redirect(returnTo);
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/appointments");
+  revalidatePath(`/dashboard/appointments/${appointment.id}`);
+
+  if (action === "START_CONSULTATION") {
+    redirect(`/doctor/appointments/${appointment.id}`);
+  } else {
+    redirect(returnTo);
+  }
 }

@@ -15,7 +15,18 @@ export default async function ProfilePage() {
           Update your basic account details. Your verified phone number is locked for now.
         </p>
 
-        <div className="mt-6 max-w-xl">
+        <div className="mt-5 mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4 max-w-xl text-xs space-y-2">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200 pb-1 mb-2">Profile Snapshot</p>
+          <div className="grid grid-cols-2 gap-y-1.5 leading-normal text-slate-700">
+            <div><span className="font-semibold text-slate-500 font-mono">Name:</span> {user.fullName}</div>
+            <div><span className="font-semibold text-slate-500 font-mono">Phone:</span> {user.phone}</div>
+            <div><span className="font-semibold text-slate-500 font-mono">Age:</span> {user.age || "Pending"}</div>
+            <div><span className="font-semibold text-slate-500 font-mono">Gender:</span> {user.gender || "Pending"}</div>
+            <div className="col-span-2"><span className="font-semibold text-slate-500 font-mono">Email:</span> {user.email}</div>
+          </div>
+        </div>
+
+        <div className="max-w-xl">
           <ProfileForm user={user} />
         </div>
       </section>

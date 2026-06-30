@@ -1,25 +1,32 @@
 import { prisma } from "@/lib/prisma";
 import type { NotificationType } from "@prisma/client";
 
-function normalizeTwilioPhone(phone: string): string {
-  const digitsOnly = phone.replace(/\D/g, "");
-  if (digitsOnly.length === 10) {
-    return `whatsapp:+91${digitsOnly}`;
+export function normalizeTwilioPhone(phone: string): string {
+  const trimmed = phone.trim();
+  if (trimmed.startsWith("whatsapp:")) {
+    return trimmed;
   }
-  if (digitsOnly.length === 12 && digitsOnly.startsWith("91")) {
-    return `whatsapp:+${digitsOnly}`;
+  let clean = trimmed.replace(/\D/g, "");
+  // If it starts with 91 and has 12 digits
+  if (clean.length === 12 && clean.startsWith("91")) {
+    return `whatsapp:+${clean}`;
   }
-  return `whatsapp:+${digitsOnly}`;
+  // If it has 10 digits
+  if (clean.length === 10) {
+    return `whatsapp:+91${clean}`;
+  }
+  // Fallback E.164
+  return `whatsapp:+${clean}`;
 }
 
-export function isWhatsAppConfigured(): boolean {
+export function isTwilioConfigured(): boolean {
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
-  const from = process.env.TWILIO_PHONE_NUMBER;
+  const from = process.env.TWILIO_WHATSAPP_NUMBER || process.env.TWILIO_PHONE_NUMBER;
   return Boolean(sid && token && from);
 }
 
-export async function sendWhatsAppNotification(
+export async function sendTwilioWhatsApp(
   params: {
     userId?: string;
     appointmentId?: string;
@@ -31,7 +38,7 @@ export async function sendWhatsAppNotification(
 ) {
   const rawSid = process.env.TWILIO_ACCOUNT_SID;
   const rawToken = process.env.TWILIO_AUTH_TOKEN;
-  const rawFrom = process.env.TWILIO_PHONE_NUMBER;
+  const rawFrom = process.env.TWILIO_WHATSAPP_NUMBER || process.env.TWILIO_PHONE_NUMBER;
 
   if (!rawSid || !rawToken || !rawFrom) {
     const errMsg = "Twilio WhatsApp configuration missing";

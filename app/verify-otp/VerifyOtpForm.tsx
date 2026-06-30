@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState, useEffect } from "react";
 import { Field } from "@/components/Field";
 import { SubmitButton } from "@/components/SubmitButton";
 import { resendPhoneOtp, verifyPhoneOtp } from "./actions";
@@ -13,7 +13,22 @@ type VerifyOtpFormProps = {
 export function VerifyOtpForm({ phone = "", devOtp }: VerifyOtpFormProps) {
   const [verifyState, verifyAction] = useActionState(verifyPhoneOtp, {});
   const [resendState, resendAction] = useActionState(resendPhoneOtp, {});
+  const [countdown, setCountdown] = useState(0);
+
   const visibleDevOtp = resendState.devOtp || devOtp;
+
+  useEffect(() => {
+    if (resendState.message) {
+      setCountdown(30);
+    }
+  }, [resendState]);
+
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
 
   return (
     <div className="space-y-6">
@@ -54,9 +69,10 @@ export function VerifyOtpForm({ phone = "", devOtp }: VerifyOtpFormProps) {
         <SubmitButton
           variant="ghost"
           fullWidth={false}
-          pendingText="Generating OTP..."
+          pendingText="Sending OTP..."
+          disabled={countdown > 0}
         >
-          Resend OTP
+          {countdown > 0 ? `Resend in ${countdown}s` : "Resend OTP"}
         </SubmitButton>
       </form>
     </div>

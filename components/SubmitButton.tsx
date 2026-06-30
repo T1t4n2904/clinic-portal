@@ -8,6 +8,7 @@ type SubmitButtonProps = {
   pendingText?: string;
   fullWidth?: boolean;
   variant?: "primary" | "secondary" | "ghost";
+  disabled?: boolean;
 };
 
 export function SubmitButton({
@@ -15,6 +16,7 @@ export function SubmitButton({
   pendingText = "Please wait...",
   fullWidth = true,
   variant = "primary",
+  disabled = false,
 }: SubmitButtonProps) {
   const { pending } = useFormStatus();
   const variantClasses = {
@@ -27,7 +29,7 @@ export function SubmitButton({
   return (
     <button
       type="submit"
-      disabled={pending}
+      disabled={pending || disabled}
       className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 ${variantClasses[variant]} ${
         fullWidth ? "w-full" : ""
       }`}

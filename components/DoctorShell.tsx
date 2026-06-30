@@ -16,7 +16,7 @@ type DoctorShellProps = {
 const navItems = [
   {
     href: "/doctor/dashboard",
-    label: "Today",
+    label: "Consultations",
     icon: (
       <path
         strokeLinecap="round"
@@ -90,7 +90,7 @@ export function DoctorShell({ fullName, children }: DoctorShellProps) {
   }, []);
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col md:flex-row">
+    <main className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-row">
       {/* Notifications Drawer */}
       <div className="fixed right-4 top-4 z-50">
         <button
@@ -146,11 +146,13 @@ export function DoctorShell({ fullName, children }: DoctorShellProps) {
 
       {/* Sidebar Navigation */}
       <aside
-        className={`border-b border-slate-200 bg-white p-3 flex flex-col justify-between transition-all md:fixed md:inset-y-0 md:left-0 ${sidebarWidth} md:border-b-0 md:border-r z-40`}
+        className={`h-screen sticky top-0 border-r border-slate-200 bg-white p-3 flex flex-col justify-between transition-all shrink-0 ${
+          collapsed ? "w-14" : "w-14 md:w-60"
+        } z-40`}
       >
         <div>
           <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3 mb-4">
-            <div className={`transition-all duration-300 ${collapsed ? "md:opacity-0 md:w-0 overflow-hidden" : "w-auto"}`}>
+            <div className={`transition-all duration-300 ${collapsed ? "md:opacity-0 md:w-0 overflow-hidden" : "hidden md:block"}`}>
               <p className="text-xs font-bold uppercase tracking-wider text-emerald-800">Ayurveda Clinic</p>
               <p className="mt-0.5 text-[10px] text-slate-500 truncate max-w-[140px]" title={fullName}>
                 Dr. {fullName}
@@ -168,7 +170,7 @@ export function DoctorShell({ fullName, children }: DoctorShellProps) {
             </button>
           </div>
 
-          <nav className="flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-visible">
+          <nav className="flex flex-col gap-1">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               return (
@@ -177,7 +179,7 @@ export function DoctorShell({ fullName, children }: DoctorShellProps) {
                   href={item.href}
                   title={item.label}
                   className={`flex items-center whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-medium transition active:scale-[0.98] ${
-                    collapsed ? "md:justify-center" : "gap-2.5"
+                    collapsed ? "justify-center" : "justify-center md:justify-start gap-2.5"
                   } ${
                     isActive
                       ? "bg-emerald-50 text-emerald-950 border-l-2 border-emerald-800 pl-[8px]"
@@ -194,24 +196,24 @@ export function DoctorShell({ fullName, children }: DoctorShellProps) {
                   >
                     {item.icon}
                   </svg>
-                  <span className={collapsed ? "md:hidden" : ""}>{item.label}</span>
+                  <span className={collapsed ? "hidden" : "hidden md:inline"}>{item.label}</span>
                 </Link>
               );
             })}
           </nav>
         </div>
 
-        <form action={logoutDoctor} className="mt-4 md:mt-0 border-t border-slate-100 pt-3">
+        <form action={logoutDoctor} className="mt-4 border-t border-slate-100 pt-3">
           <SubmitButton variant="ghost" pendingText="Leaving...">
-            <span className={collapsed ? "md:hidden" : ""}>Logout</span>
-            <span className={collapsed ? "hidden md:inline" : "hidden"}>Exit</span>
+            <span className={collapsed ? "hidden" : "hidden md:inline"}>Logout</span>
+            <span className={collapsed ? "hidden" : "inline md:hidden"}>Exit</span>
           </SubmitButton>
         </form>
       </aside>
 
       {/* Main Content Area */}
       <section
-        className={`flex-1 min-w-0 transition-all ${contentMargin} md:h-screen md:overflow-y-auto p-4 md:p-6 lg:p-8`}
+        className="flex-1 min-w-0 p-4 md:p-6 lg:p-8"
       >
         {children}
       </section>

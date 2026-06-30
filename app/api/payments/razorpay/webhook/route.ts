@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
+import { sendClinicNotification } from "@/lib/notifications/service";
 
 export async function POST(req: Request) {
   try {
@@ -8,7 +9,6 @@ export async function POST(req: Request) {
     const signature = req.headers.get("x-razorpay-signature") || "";
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
 
-    // TODO: Verify signature only if the secret is configured
     if (webhookSecret) {
       const expectedSignature = crypto
         .createHmac("sha256", webhookSecret)
@@ -25,30 +25,58 @@ export async function POST(req: Request) {
     const payload = JSON.parse(bodyText);
     const event = payload.event;
 
-    // TODO: Parse payment details and update the Payment + Appointment records in transaction
-    // Example logic skeleton:
-    // if (event === "payment.captured" || event === "order.paid") {
-    //   const orderId = payload.payload?.payment?.entity?.order_id || payload.payload?.order?.entity?.id;
-    //   const paymentId = payload.payload?.payment?.entity?.id;
-    //   const payment = await prisma.payment.findFirst({ where: { providerOrderId: orderId } });
-    //   if (payment) {
-    //     await prisma.$transaction([
-    //       prisma.payment.update({
-    //         where: { id: payment.id },
-    //         data: { status: "PAID", providerPaymentId: paymentId },
-    //       }),
-    //       prisma.appointment.update({
-    //         where: { id: payment.appointmentId },
-    //         data: { paymentStatus: "PAID", status: "CONFIRMED" },
-    //       }),
-    //     ]);
-    //   }
-    // }
+    if (event === "payment.captured" || event === "order.paid") {
+      const orderId = payload.payload?.payment?.entity?.order_id || payload.payload?.order?.entity?.id;
+      const paymentId = payload.payload?.payment?.entity?.id;
+
+      if (orderId && paymentId) {
+        const payment = await prisma.payment.findFirst({
+          where: { providerOrderId: orderId },
+        });
+
+        if (payment && payment.status !== "PAID") {
+          const appointment = await prisma.appointment.findUnique({
+            where: { id: payment.appointmentId },
+            include: { patient: true },
+          });
+
+          if (appointment) {
+            await prisma.$transaction([
+              prisma.payment.update({
+                where: { id: payment.id },
+                data: { status: "PAID", providerPaymentId: paymentId },
+              }),
+              prisma.appointment.update({
+                where: { id: payment.appointmentId },
+                data: { paymentStatus: "PAID", status: "CONFIRMED" },
+              }),
+            ]);
+
+            await sendClinicNotification({
+              userId: appointment.patient.id,
+              appointmentId: appointment.id,
+              type: "APPOINTMENT_CONFIRMED",
+              recipient: appointment.patient.phone,
+              message: `Namaste ${appointment.patient.fullName}, your appointment is confirmed for ${appointment.slotLabel}. Please open the clinic portal for details.`,
+            });
+
+            const doctorPhone = process.env.DOCTOR_WHATSAPP_NUMBER;
+            if (doctorPhone) {
+              await sendClinicNotification({
+                appointmentId: appointment.id,
+                type: "APPOINTMENT_CONFIRMED",
+                recipient: doctorPhone.replace(/['"]/g, "").trim(),
+                message: `New appointment confirmed with ${appointment.patient.fullName} for ${appointment.slotLabel}. Mode: ${appointment.mode}. Open the doctor portal to view details.`,
+              });
+            }
+          }
+        }
+      }
+    }
 
     return NextResponse.json({ received: true, event });
   } catch (error: any) {
     console.error("Razorpay webhook error:", error);
-    // Not crashing and returning a safe JSON response if something goes wrong
     return NextResponse.json(
       { error: "Webhook processing failed", details: error.message },
       { status: 500 }

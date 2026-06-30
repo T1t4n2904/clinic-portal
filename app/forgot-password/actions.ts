@@ -34,6 +34,20 @@ export async function requestPasswordReset(
     };
   }
 
+  const { isTwilioVerifyConfigured, sendVerificationOtp } = await import("@/lib/twilio-verify");
+
+  if (isTwilioVerifyConfigured()) {
+    const otpResult = await sendVerificationOtp(user.phone);
+    if (!otpResult.success) {
+      return { message: otpResult.error || "Failed to send WhatsApp reset OTP code via Twilio Verify.", identifier };
+    }
+    return {
+      message: "Password reset OTP sent to your WhatsApp.",
+      identifier,
+    };
+  }
+
+  // Fallback to existing demo OTP flow
   await prisma.otpCode.updateMany({
     where: {
       userId: user.id,

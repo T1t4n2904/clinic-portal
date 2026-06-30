@@ -51,6 +51,25 @@ export async function resetPassword(
     return { errors: { identifier: "No patient account found for these details." } };
   }
 
+  const { isTwilioVerifyConfigured, checkVerificationOtp } = await import("@/lib/twilio-verify");
+
+  if (isTwilioVerifyConfigured()) {
+    const checkResult = await checkVerificationOtp(user.phone, otp);
+    if (!checkResult.success) {
+      return { errors: { otp: checkResult.error || "Invalid or expired reset OTP." } };
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash: await bcrypt.hash(password, 10),
+      },
+    });
+
+    redirect("/login?reset=1");
+  }
+
+  // Fallback to existing demo OTP flow
   const latestOtp = await prisma.otpCode.findFirst({
     where: {
       userId: user.id,

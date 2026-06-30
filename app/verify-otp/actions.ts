@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/session";
 import { generateOtp, getOtpExpiry, hashOtp, isOtpExpired, verifyOtp } from "@/lib/otp";
+import { isTwilioVerifyConfigured, sendVerificationOtp, checkVerificationOtp } from "@/lib/twilio-verify";
 
 export type VerifyOtpActionState = {
   message?: string;
@@ -25,6 +26,55 @@ export async function verifyPhoneOtp(
     return { message: "Enter a valid 6-digit OTP." };
   }
 
+  if (isTwilioVerifyConfigured()) {
+    const { cookies } = await import("next/headers");
+    const cookieStore = await cookies();
+    const cookieData = cookieStore.get("registration_data");
+
+    if (!cookieData) {
+      return { message: "Registration session expired. Please register again." };
+    }
+
+    let registrationData;
+    try {
+      registrationData = JSON.parse(cookieData.value);
+    } catch {
+      return { message: "Failed to read registration session. Please register again." };
+    }
+
+    const checkResult = await checkVerificationOtp(phone, otp);
+    if (!checkResult.success) {
+      return { message: checkResult.error || "Invalid or expired OTP. Please try again." };
+    }
+
+    // OTP is approved! Create the patient account now
+    try {
+      const user = await prisma.user.create({
+        data: {
+          fullName: registrationData.fullName,
+          age: registrationData.age,
+          gender: registrationData.gender,
+          email: registrationData.email,
+          phone: registrationData.phone,
+          passwordHash: registrationData.passwordHash,
+          phoneVerified: true,
+          role: "PATIENT",
+        },
+      });
+
+      cookieStore.delete("registration_data");
+      await createSession(user.id);
+    } catch (err: any) {
+      if (err.code === "P2002") {
+        return { message: "This email or phone number is already registered." };
+      }
+      return { message: "Failed to create patient account. Please try again." };
+    }
+
+    redirect("/dashboard");
+  }
+
+  // Fallback to existing demo OTP flow
   const latestOtp = await prisma.otpCode.findFirst({
     where: {
       phone,
@@ -75,6 +125,26 @@ export async function resendPhoneOtp(
     return { message: "Enter a valid 10-digit phone number." };
   }
 
+  if (isTwilioVerifyConfigured()) {
+    const { cookies } = await import("next/headers");
+    const cookieStore = await cookies();
+    const cookieData = cookieStore.get("registration_data");
+
+    if (!cookieData) {
+      return { message: "Registration session not found. Please register again." };
+    }
+
+    const otpResult = await sendVerificationOtp(phone);
+    if (!otpResult.success) {
+      return { message: otpResult.error || "Failed to resend WhatsApp OTP via Twilio Verify." };
+    }
+
+    return {
+      message: "A new OTP has been sent to your WhatsApp.",
+    };
+  }
+
+  // Fallback to existing demo OTP flow
   const user = await prisma.user.findUnique({
     where: { phone },
     select: {

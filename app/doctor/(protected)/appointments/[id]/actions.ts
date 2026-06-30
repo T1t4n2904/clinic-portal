@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireDoctor } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { sendClinicNotification } from "@/lib/notifications/service";
 
 export type ConsultationActionState = {
   errors?: Record<string, string>;
@@ -183,7 +184,6 @@ export async function savePrescription(
     return { message: "Prescription already exists for this consultation." };
   }
 
-  const { sendDemoNotification } = await import("@/lib/notifications/demo");
   const patientUser = await prisma.user.findUnique({
     where: { id: appointment.patientId },
     select: { fullName: true, phone: true },
@@ -218,13 +218,24 @@ export async function savePrescription(
   });
 
   if (patientUser) {
-    await sendDemoNotification({
+    const message = buildPrescriptionReadyMessage(patientUser.fullName, appointment.id);
+    await sendClinicNotification({
       userId: appointment.patientId,
       appointmentId: appointment.id,
       type: "PRESCRIPTION_READY",
       recipient: patientUser.phone,
-      message: `Namaste ${patientUser.fullName}, your prescription for ${appointment.id} is ready.`,
+      message,
     });
+
+    const doctorPhone = process.env.DOCTOR_WHATSAPP_NUMBER;
+    if (doctorPhone) {
+      await sendClinicNotification({
+        appointmentId: appointment.id,
+        type: "PRESCRIPTION_READY",
+        recipient: doctorPhone.replace(/['"]/g, "").trim(),
+        message: `Prescription was sent successfully to ${patientUser.fullName}.`,
+      });
+    }
   }
 
   revalidatePath("/doctor/dashboard");
@@ -233,5 +244,65 @@ export async function savePrescription(
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/appointments");
   revalidatePath(`/dashboard/appointments/${appointment.id}`);
-  redirect(`/doctor/appointments/${appointment.id}`);
+  redirect("/doctor/dashboard");
+}
+
+export async function sendPrescriptionNotification(formData: FormData) {
+  const doctor = await requireDoctor();
+  const appointmentId = String(formData.get("appointmentId") || "");
+
+  const appointment = await prisma.appointment.findUnique({
+    where: { id: appointmentId },
+    select: {
+      id: true,
+      patientId: true,
+      patient: {
+        select: {
+          fullName: true,
+          phone: true,
+        },
+      },
+    },
+  });
+
+  if (!appointment) {
+    throw new Error("Appointment not found");
+  }
+
+  const message = buildPrescriptionReadyMessage(appointment.patient.fullName, appointment.id);
+  await sendClinicNotification({
+    userId: appointment.patientId,
+    appointmentId: appointment.id,
+    type: "PRESCRIPTION_READY",
+    recipient: appointment.patient.phone,
+    message,
+  }, true);
+
+  const doctorPhone = process.env.DOCTOR_WHATSAPP_NUMBER;
+  if (doctorPhone) {
+    await sendClinicNotification({
+      appointmentId: appointment.id,
+      type: "PRESCRIPTION_READY",
+      recipient: doctorPhone.replace(/['"]/g, "").trim(),
+      message: `Prescription was sent successfully to ${appointment.patient.fullName}.`,
+    }, true);
+  }
+
+  revalidatePath(`/doctor/appointments/${appointment.id}`);
+  revalidatePath(`/dashboard/appointments/${appointment.id}`);
+}
+
+function buildPrescriptionReadyMessage(patientName: string, appointmentId: string): string {
+  const rawBaseUrl = process.env.APP_BASE_URL;
+  const baseUrl = rawBaseUrl ? rawBaseUrl.replace(/['"]/g, "").trim().replace(/\/$/, "") : "";
+
+  let msg = `Namaste ${patientName}, your prescription is ready.`;
+
+  if (baseUrl) {
+    msg += `\n\n- View prescription: ${baseUrl}/dashboard/appointments/${appointmentId}/prescription/print\n- Download PDF: ${baseUrl}/dashboard/appointments/${appointmentId}/prescription/download`;
+  } else {
+    console.warn("APP_BASE_URL is not set. Sending prescription notification without links.");
+  }
+
+  return msg;
 }

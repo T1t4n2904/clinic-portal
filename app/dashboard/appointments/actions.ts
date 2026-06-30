@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { requirePatient } from "@/lib/auth";
 import { DEMO_APPOINTMENT_AMOUNT, getDemoSlot } from "@/lib/appointments";
 import { processDemoPayment } from "@/lib/payments/demo";
-import { sendDemoNotification } from "@/lib/notifications/demo";
+import { sendClinicNotification } from "@/lib/notifications/service";
 
 export type AppointmentActionState = {
   errors?: Record<string, string>;
@@ -73,13 +73,23 @@ export async function demoPayAppointment(formData: FormData) {
 
   await processDemoPayment(appointment.id, appointment.amount);
 
-  await sendDemoNotification({
+  await sendClinicNotification({
     userId: patient.id,
     appointmentId: appointment.id,
     type: "APPOINTMENT_CONFIRMED",
     recipient: patient.phone,
-    message: `Namaste ${patient.fullName}, your appointment for ${appointment.slotLabel} has been confirmed.`,
+    message: `Namaste ${patient.fullName}, your appointment is confirmed for ${appointment.slotLabel}. Please open the clinic portal for details.`,
   });
+
+  const doctorPhone = process.env.DOCTOR_WHATSAPP_NUMBER;
+  if (doctorPhone) {
+    await sendClinicNotification({
+      appointmentId: appointment.id,
+      type: "APPOINTMENT_CONFIRMED",
+      recipient: doctorPhone.replace(/['"]/g, "").trim(),
+      message: `New appointment confirmed with ${patient.fullName} for ${appointment.slotLabel}. Mode: ${appointment.mode}. Open the doctor portal to view details.`,
+    });
+  }
 
   redirect(`/dashboard/appointments/${appointment.id}?paid=1`);
 }

@@ -25,6 +25,22 @@ export default async function DashboardPage() {
     orderBy: { slotStart: "asc" },
   });
 
+  const latestCompletedAppointment = await prisma.appointment.findFirst({
+    where: {
+      patientId: user.id,
+      status: "COMPLETED",
+      consultation: { isNot: null },
+    },
+    include: {
+      consultation: {
+        include: {
+          prescription: true,
+        },
+      },
+    },
+    orderBy: { slotStart: "desc" },
+  });
+
   return (
     <div className="space-y-4">
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
@@ -78,6 +94,59 @@ export default async function DashboardPage() {
           </p>
         )}
       </section>
+
+      {latestCompletedAppointment ? (
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start border-b border-slate-100 pb-3 mb-4">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Latest Consultation Summary</p>
+              <h2 className="mt-1 text-sm font-bold text-slate-900">
+                {latestCompletedAppointment.slotLabel}
+              </h2>
+            </div>
+            <Link
+              href="/dashboard/consultations"
+              className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition active:scale-[0.98]"
+            >
+              View all consultations
+            </Link>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Detail label="Diagnosis" value={latestCompletedAppointment.consultation!.diagnosis} />
+            <Detail label="Chief Complaint" value={latestCompletedAppointment.consultation!.chiefComplaint} />
+          </div>
+
+          {latestCompletedAppointment.consultation!.prescription ? (
+            <div className="mt-4 rounded-lg border border-emerald-100 bg-emerald-50/50 p-3.5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-bold text-emerald-800">✓ Prescription Available</p>
+                <p className="text-[11px] text-slate-600 mt-0.5">Your prescription has been issued by the doctor.</p>
+              </div>
+              <div className="flex gap-2">
+                <Link
+                  href={`/dashboard/appointments/${latestCompletedAppointment.id}`}
+                  className="inline-flex items-center rounded bg-emerald-800 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition active:scale-[0.98]"
+                >
+                  View Prescription
+                </Link>
+                <a
+                  href={`/dashboard/appointments/${latestCompletedAppointment.id}/prescription/print`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition active:scale-[0.98]"
+                >
+                  📄 Download PDF
+                </a>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-4 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded p-3 text-center">
+              Prescription will appear here after doctor shares it.
+            </p>
+          )}
+        </section>
+      ) : null}
 
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm md:p-6">
         <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Profile Settings</p>

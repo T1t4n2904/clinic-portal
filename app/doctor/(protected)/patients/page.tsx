@@ -53,7 +53,12 @@ export default async function DoctorPatientsPage() {
               {patients.map((p) => (
                 <tr key={p.id} className="hover:bg-slate-50 transition-colors">
                   <td className="py-2 px-4">
-                    <span className="font-semibold text-slate-900">{p.fullName}</span>
+                    <Link
+                      href={`/doctor/patients/${p.id}`}
+                      className="font-semibold text-slate-900 hover:text-emerald-800 hover:underline"
+                    >
+                      {p.fullName}
+                    </Link>
                   </td>
                   <td className="py-2 px-4 text-slate-600">
                     {[p.age ? `${p.age} yrs` : null, p.gender].filter(Boolean).join(" / ") || "—"}

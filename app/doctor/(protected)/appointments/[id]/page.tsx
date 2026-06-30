@@ -21,6 +21,7 @@ export default async function DoctorAppointmentDetailPage({
     where: { id },
     select: {
       id: true,
+      patientId: true,
       mode: true,
       slotLabel: true,
       slotStart: true,
@@ -83,7 +84,7 @@ export default async function DoctorAppointmentDetailPage({
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 text-slate-900 shadow-sm md:p-6">
       <Link
-        href="/doctor/appointments"
+        href="/doctor/dashboard"
         className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
       >
         ← Back
@@ -93,7 +94,12 @@ export default async function DoctorAppointmentDetailPage({
         <div>
           <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Appointment Detail</p>
           <h1 className="mt-1 text-lg font-bold tracking-tight">
-            {appointment.patient.fullName}
+            <Link
+              href={`/doctor/patients/${appointment.patientId}`}
+              className="hover:text-emerald-800 hover:underline"
+            >
+              {appointment.patient.fullName}
+            </Link>
           </h1>
           <p className="mt-2 text-sm text-slate-600">
             {patientMeta(appointment.patient.age, appointment.patient.gender)} ·{" "}
@@ -139,17 +145,27 @@ export default async function DoctorAppointmentDetailPage({
         <div className="mt-6 border-t border-slate-100 pt-5">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Notification Logs</h3>
           <div className="space-y-1.5">
-            {appointment.notificationLogs.map((log) => (
-              <div key={log.id} className="flex justify-between items-center text-xs text-slate-600 bg-slate-50 rounded border border-slate-100 px-3 py-1.5">
-                <div>
-                  <span className="font-semibold text-slate-900">{log.type.replace("_", " ")}</span>
-                  <span className="text-[10px] text-slate-400 ml-1.5">({log.channel})</span>
+            {appointment.notificationLogs.map((log) => {
+              let displayStatus: string = log.status;
+              if (log.status === "FAILED") {
+                displayStatus = "Failed";
+              } else if (log.status === "PENDING") {
+                displayStatus = "Pending";
+              } else if (log.status === "SENT") {
+                displayStatus = log.channel === "WHATSAPP" ? "WhatsApp sent" : (log.channel === "DEMO" ? "Demo sent" : `${log.channel} sent`);
+              }
+
+              return (
+                <div key={log.id} className="flex justify-between items-center text-xs text-slate-600 bg-slate-50 rounded border border-slate-100 px-3 py-1.5">
+                  <div>
+                    <span className="font-semibold text-slate-900">{log.type.replace(/_/g, " ")}</span>
+                  </div>
+                  <span className={`font-semibold ${log.status === "SENT" ? "text-emerald-700" : (log.status === "FAILED" ? "text-red-600" : "text-slate-500")}`}>
+                    {displayStatus}
+                  </span>
                 </div>
-                <span className={`font-semibold ${log.status === "SENT" ? "text-emerald-700" : "text-red-600"}`}>
-                  {log.status}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ) : null}
@@ -158,13 +174,50 @@ export default async function DoctorAppointmentDetailPage({
         <>
           <ConsultationView consultation={appointment.consultation} />
           {appointment.consultation.prescription ? (
-            <PrescriptionView prescription={appointment.consultation.prescription} />
+            <PrescriptionView prescription={appointment.consultation.prescription} showDoctorActions={true} />
           ) : appointment.status === "COMPLETED" ? (
             <PrescriptionForm appointmentId={appointment.id} />
           ) : null}
         </>
       ) : appointment.status === "IN_CONSULTATION" ? (
-        <ConsultationForm appointmentId={appointment.id} />
+        <div className="mt-6 grid gap-6 md:grid-cols-2 border-t border-slate-100 pt-5">
+          {/* Left Panel: Call / History area */}
+          <div>
+            {appointment.mode === "ONLINE" ? (
+              <div className="rounded-lg border border-purple-200 bg-purple-50/30 p-4 space-y-4 text-center">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-purple-700">Video Consultation Area</p>
+                <div className="h-40 bg-slate-900 rounded-lg flex items-center justify-center text-slate-400 text-xs">
+                  [ Video Feed Pending Connection ]
+                </div>
+                <button
+                  type="button"
+                  className="w-full inline-flex items-center justify-center rounded-lg bg-purple-700 hover:bg-purple-800 text-white font-semibold text-xs py-2 transition active:scale-[0.98]"
+                >
+                  ☏ Join Call
+                </button>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-amber-200 bg-amber-50/30 p-4 space-y-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Patient Case Snapshot</p>
+                <div className="text-xs space-y-2 text-slate-700 leading-normal">
+                  <p><span className="font-semibold text-slate-500">Name:</span> {appointment.patient.fullName}</p>
+                  <p><span className="font-semibold text-slate-500">Age / Gender:</span> {[appointment.patient.age ? `${appointment.patient.age} Yrs` : null, appointment.patient.gender].filter(Boolean).join(" / ") || "N/A"}</p>
+                  <p><span className="font-semibold text-slate-500">Phone:</span> {appointment.patient.phone}</p>
+                  <p><span className="font-semibold text-slate-500">Email:</span> {appointment.patient.email || "N/A"}</p>
+                  <div className="border-t border-slate-200 pt-2 mt-2">
+                    <p className="font-bold text-amber-800 uppercase text-[9px] tracking-wider">Ayurvedic Practice Guideline</p>
+                    <p className="text-[10px] text-slate-500 mt-1">Verify Prakriti assessment (Vata/Pitta/Kapha) and examine tongue/pulse (Nadi pariksha) before documenting formulation recommendations.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Panel: Consultation Form */}
+          <div>
+            <ConsultationForm appointmentId={appointment.id} />
+          </div>
+        </div>
       ) : null}
     </section>
   );

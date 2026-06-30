@@ -49,6 +49,34 @@ export async function registerPatient(
 
   const passwordHash = await bcrypt.hash(result.data.password, 10);
 
+  const { isTwilioVerifyConfigured, sendVerificationOtp } = await import("@/lib/twilio-verify");
+
+  if (isTwilioVerifyConfigured()) {
+    const { cookies } = await import("next/headers");
+    const registrationData = {
+      fullName: result.data.fullName,
+      age: result.data.age,
+      gender: result.data.gender,
+      email: result.data.email,
+      phone: result.data.phone,
+      passwordHash,
+    };
+    (await cookies()).set("registration_data", JSON.stringify(registrationData), {
+      maxAge: 900, // 15 mins
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+    });
+
+    const otpResult = await sendVerificationOtp(result.data.phone);
+    if (!otpResult.success) {
+      return { message: otpResult.error || "Failed to send WhatsApp verification OTP code via Twilio Verify." };
+    }
+
+    redirect(`/verify-otp?phone=${result.data.phone}`);
+  }
+
+  // Fallback to existing demo OTP flow
   const user = await prisma.user.create({
     data: {
       fullName: result.data.fullName,
